@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Vehicles - AquaShine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/design-system.css">
+</head>
+<body>
+    <nav id="navbar"></nav>
+
+    <div class="app-layout">
+        <aside id="sidebar"></aside>
+
+        <main class="app-main">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.75rem;flex-wrap:wrap;gap:1rem;">
+                <div>
+                    <h1 style="font-size:1.85rem;">My Vehicles</h1>
+                    <p class="text-muted" style="margin-top:.25rem;">Manage the cars you'll book washes for.</p>
+                </div>
+                <a href="/auth/add-vehicle.html" class="btn btn-primary">+ Add Vehicle</a>
+            </div>
+
+            <div id="vehicleGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;">
+                <p class="text-muted">Loading…</p>
+            </div>
+        </main>
+    </div>
+
+    <footer><p>&copy; 2026 AquaShine - STQA Lab Project</p></footer>
+
+    <script src="/js/toast.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script src="/js/sidebar.js"></script>
+    <script src="/js/vehicles.js"></script>
+</body>
+</html>

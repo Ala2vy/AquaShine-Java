@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reschedule Booking - AquaShine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/app.css">
+    <style>
+        .slot-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(80px,1fr)); gap:.5rem; margin-top:.5rem; }
+        .slot-btn { padding:.65rem; border:1.5px solid var(--border); border-radius:6px; background:white; cursor:pointer; font-size:.9rem; transition:.2s; }
+        .slot-btn:hover { border-color:var(--primary); }
+        .slot-btn.selected { background:var(--primary); color:white; border-color:var(--primary); }
+    </style>
+</head>
+<body>
+    <nav id="navbar"></nav>
+    <main class="container-narrow">
+        <div class="card mt-4">
+            <h2 class="mb-3">🔄 Reschedule Booking</h2>
+            <p class="text-muted mb-4">Pick a new date and time.</p>
+
+            <div class="form-group">
+                <label for="newDate">New Date</label>
+                <input type="date" id="newDate" required>
+            </div>
+
+            <div class="form-group">
+                <label>New Time</label>
+                <div class="slot-grid" id="slotGrid"></div>
+            </div>
+
+            <button id="rescheduleBtn" class="btn btn-primary btn-block mt-3">
+                Confirm Reschedule
+            </button>
+            <a href="/auth/bookings.html" class="btn btn-ghost btn-block mt-3">← Back to bookings</a>
+            <p id="error" class="error-message"></p>
+        </div>
+    </main>
+    <footer><p>&copy; 2026 AquaShine - STQA Lab Project</p></footer>
+    <script src="/js/toast.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script src="/js/cancellation.js"></script>
+</body>
+</html>

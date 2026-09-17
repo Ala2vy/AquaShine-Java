@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt - AquaShine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/design-system.css">
+    <style>
+        .receipt-line {
+            display: flex;
+            justify-content: space-between;
+            padding: .85rem 0;
+            border-bottom: 1px dashed var(--gray-200);
+            font-size: .92rem;
+        }
+        .receipt-line:last-child { border-bottom: none; }
+        .receipt-line .label { color: var(--gray-500); }
+        .receipt-line .value { color: var(--navy-900); font-weight: 600; }
+        .receipt-line.total {
+            padding-top: 1.25rem;
+            margin-top: .5rem;
+            border-top: 2px solid var(--gray-100);
+            border-bottom: none;
+            font-size: 1.1rem;
+        }
+        .receipt-line.total .value {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1.5rem;
+            color: var(--blue-600);
+            font-weight: 800;
+        }
+    </style>
+</head>
+<body>
+    <nav id="navbar"></nav>
+
+    <main class="container-narrow">
+        <div class="card mt-4" style="padding:2.5rem 2rem;">
+            <div style="text-align:center;margin-bottom:2rem;">
+                <div style="width:72px;height:72px;background:linear-gradient(135deg,var(--success),#22c55e);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:2rem;color:white;box-shadow:0 12px 32px rgba(16,185,129,.3);animation:pop .5s var(--ease-spring);">✓</div>
+                <h1 style="font-size:1.65rem;margin-bottom:.35rem;">Payment Successful</h1>
+                <p class="text-muted">Your booking is confirmed. See you soon!</p>
+            </div>
+
+            <div style="background:var(--gray-50);border-radius:var(--r-md);padding:1.5rem;margin-bottom:1.5rem;">
+                <div class="receipt-line">
+                    <span class="label">Transaction ID</span>
+                    <span class="value" id="txnId" style="font-family:'Courier New',monospace;">—</span>
+                </div>
+                <div class="receipt-line">
+                    <span class="label">Original Amount</span>
+                    <span class="value" id="origAmt">₹0</span>
+                </div>
+                <div class="receipt-line" id="discRow" style="display:none;">
+                    <span class="label">Discount</span>
+                    <span class="value" id="discAmt" style="color:var(--success);">-₹0</span>
+                </div>
+                <div class="receipt-line total">
+                    <span class="label" style="color:var(--navy-900);font-weight:700;">Total Paid</span>
+                    <span class="value" id="finalAmt">₹0</span>
+                </div>
+            </div>
+
+            <a href="/auth/bookings.html" class="btn btn-primary btn-block btn-lg mb-2">View My Bookings</a>
+            <a href="/dashboard.html" class="btn btn-ghost btn-block">Back to Dashboard</a>
+        </div>
+    </main>
+
+    <footer><p>&copy; 2026 AquaShine - STQA Lab Project</p></footer>
+
+    <script src="/js/toast.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script src="/js/payment-v2.js"></script>
+</body>
+</html>

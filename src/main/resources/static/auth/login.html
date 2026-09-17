@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - AquaShine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/design-system.css">
+    <style>
+        .role-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: .35rem;
+            background: var(--gray-100);
+            padding: .35rem;
+            border-radius: var(--r-md);
+            margin-bottom: 1.25rem;
+        }
+        .role-tab {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .5rem;
+            padding: .75rem 1rem;
+            border-radius: var(--r-sm);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: .92rem;
+            font-weight: 600;
+            color: var(--gray-500);
+            transition: all var(--t) var(--ease);
+        }
+        .role-tab:hover {
+            color: var(--navy-900);
+        }
+        .role-tab.active {
+            background: white;
+            color: var(--navy-900);
+            box-shadow: var(--shadow-sm);
+        }
+        .role-tab svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .role-tab[data-role="ADMIN"].active {
+            color: #b45309;
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            box-shadow: 0 4px 14px rgba(217,119,6,.2);
+        }
+
+        .role-hint {
+            font-size: .82rem;
+            color: var(--gray-500);
+            text-align: center;
+            margin-bottom: 1.25rem;
+            min-height: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <nav id="navbar"></nav>
+
+    <main class="container-narrow">
+        <div class="card mt-4" style="padding:2.5rem 2rem;">
+            <div class="text-center" style="margin-bottom:1.75rem;">
+                <h2 style="margin-bottom:.35rem;">Welcome back</h2>
+                <p class="text-muted" style="font-size:.95rem;">Sign in to continue to AquaShine.</p>
+            </div>
+
+            <!-- Role selector -->
+            <div class="role-tabs" id="roleTabs">
+                <button type="button" class="role-tab active" data-role="USER">
+                    <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Customer
+                </button>
+                <button type="button" class="role-tab" data-role="ADMIN">
+                    <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    Admin
+                </button>
+            </div>
+
+            <p class="role-hint" id="roleHint">Sign in as a customer to book a wash.</p>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" placeholder="you@example.com" required autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block btn-lg" id="loginBtn">
+                    Login
+                </button>
+                <p id="error" class="error-message text-center" style="margin-top:.75rem;"></p>
+            </form>
+
+            <p class="text-center mt-3 text-muted" style="font-size:.9rem;">
+                Don't have an account?
+                <a href="/auth/register.html" style="color:var(--blue-600);font-weight:600;">Register</a>
+            </p>
+        </div>
+    </main>
+
+    <footer><p>&copy; 2026 AquaShine - STQA Lab Project</p></footer>
+
+    <script src="/js/toast.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script src="/js/auth.js"></script>
+</body>
+</html>

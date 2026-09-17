@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Confirmed - AquaShine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/design-system.css">
+</head>
+<body>
+    <nav id="navbar"></nav>
+    <main class="container-narrow text-center">
+        <div class="card card-elevated mt-4" style="padding:3rem 2rem;">
+            <div style="width:80px;height:80px;background:linear-gradient(135deg,var(--success),#22c55e);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;font-size:2.5rem;color:white;box-shadow:0 12px 32px rgba(16,185,129,.3);">✓</div>
+            <h1 style="font-size:1.75rem;margin-bottom:.5rem;">Booking Confirmed</h1>
+            <p class="text-muted mb-4">Your slot is reserved. Complete payment to finalize.</p>
+
+            <a id="payNowBtn" href="#" class="btn btn-primary btn-block btn-lg mb-2">💳 Pay Now</a>
+            <a href="/auth/bookings.html" class="btn btn-ghost btn-block">View My Bookings</a>
+        </div>
+    </main>
+    <footer><p>&copy; 2026 AquaShine - STQA Lab Project</p></footer>
+    <script src="/js/toast.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script>
+        const lastBookingId = localStorage.getItem("lastBookingId");
+        const payBtn = document.getElementById("payNowBtn");
+        payBtn.href = lastBookingId
+            ? "/auth/payment.html?bookingId=" + lastBookingId
+            : "/auth/bookings.html";
+    </script>
+</body>
+</html>

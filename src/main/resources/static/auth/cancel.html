@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cancel Booking - AquaShine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+    <nav id="navbar"></nav>
+    <main class="container-narrow">
+        <div class="card mt-4">
+            <h2 class="mb-3">❌ Cancel Booking</h2>
+            <p class="text-muted mb-4">Review the refund policy before cancelling.</p>
+
+            <div id="refundInfo" style="background:#fff7ed;padding:1.25rem;border-radius:8px;margin-bottom:1.5rem;">
+                <div id="refundDetails">Loading refund info…</div>
+            </div>
+
+            <div class="form-group">
+                <label for="reason">Reason (optional)</label>
+                <input type="text" id="reason" placeholder="Why are you cancelling?" maxlength="200">
+            </div>
+
+            <button id="cancelBtn" class="btn btn-danger btn-block">
+                Confirm Cancellation
+            </button>
+            <a href="/auth/bookings.html" class="btn btn-ghost btn-block mt-3">← Back to bookings</a>
+            <p id="error" class="error-message"></p>
+        </div>
+    </main>
+    <footer><p>&copy; 2026 AquaShine - STQA Lab Project</p></footer>
+    <script src="/js/toast.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script src="/js/cancellation.js"></script>
+</body>
+</html>

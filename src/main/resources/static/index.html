@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaShine — Premium Car Wash & Detailing</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/design-system.css">
+</head>
+<body>
+    <nav id="navbar"></nav>
+
+    <!-- HERO -->
+    <section class="hero-pro">
+        <div class="hero-inner">
+            <div>
+                <div class="hero-badge">Trusted by 2,000+ drivers</div>
+                <h1 class="hero-title">
+                    Your car deserves<br>
+                    <span class="gradient">the royal treatment.</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Premium car wash and detailing, booked in 60 seconds.
+                    Pick a slot, we handle the shine.
+                </p>
+                <div class="hero-cta">
+                    <a href="/auth/register.html" class="btn btn-primary btn-xl">
+                        Book a Wash →
+                    </a>
+                    <a href="/auth/services.html" class="btn btn-secondary btn-xl">
+                        View Services
+                    </a>
+                </div>
+                <div class="hero-trust">
+                    <div class="hero-trust-item">
+                        <strong>4.9★</strong>
+                        Average rating
+                    </div>
+                    <div class="hero-trust-item">
+                        <strong>60 sec</strong>
+                        To book a slot
+                    </div>
+                    <div class="hero-trust-item">
+                        <strong>30+</strong>
+                        Cities served
+                    </div>
+                </div>
+            </div>
+            <div class="hero-visual">
+                🚗
+            </div>
+        </div>
+    </section>
+
+    <!-- SERVICES -->
+    <section class="section section-alt">
+        <div class="section-header">
+            <h2>Simple, transparent pricing</h2>
+            <p>Choose the wash that fits your day. No hidden fees.</p>
+        </div>
+        <div class="bento-grid">
+            <div class="bento-card">
+                <div class="bento-badge">Basic</div>
+                <div class="bento-icon">💧</div>
+                <h3>Basic Wash</h3>
+                <p class="bento-desc">Exterior rinse and quick dry. Perfect for a routine shine.</p>
+                <div class="bento-price">₹500</div>
+                <div class="bento-price-label">Hatchback base price</div>
+                <ul class="bento-features">
+                    <li>Exterior foam wash</li>
+                    <li>Hand dry</li>
+                    <li>Tyre cleaning</li>
+                </ul>
+                <a href="/auth/register.html" class="btn btn-secondary">Choose Basic</a>
+            </div>
+
+            <div class="bento-card featured">
+                <div class="bento-badge">Most Popular</div>
+                <div class="bento-icon">✨</div>
+                <h3>Premium Wash</h3>
+                <p class="bento-desc">Inside-out full service. The one everyone picks.</p>
+                <div class="bento-price">₹1000</div>
+                <div class="bento-price-label">Hatchback base price</div>
+                <ul class="bento-features">
+                    <li>Everything in Basic</li>
+                    <li>Interior vacuum</li>
+                    <li>Dashboard polish</li>
+                    <li>Glass cleaning</li>
+                </ul>
+                <a href="/auth/register.html" class="btn btn-primary">Choose Premium</a>
+            </div>
+
+            <div class="bento-card">
+                <div class="bento-badge">Deluxe</div>
+                <div class="bento-icon">👑</div>
+                <h3>Deluxe Detail</h3>
+                <p class="bento-desc">Showroom shine. For when it really matters.</p>
+                <div class="bento-price">₹2000</div>
+                <div class="bento-price-label">Hatchback base price</div>
+                <ul class="bento-features">
+                    <li>Everything in Premium</li>
+                    <li>Wax polish</li>
+                    <li>Ceramic coating</li>
+                    <li>Engine bay clean</li>
+                </ul>
+                <a href="/auth/register.html" class="btn btn-secondary">Choose Deluxe</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="section">
+        <div class="section-header">
+            <h2>Book in 3 steps</h2>
+            <p>From signup to shiny in under two minutes.</p>
+        </div>
+        <div class="bento-grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr));max-width:1000px;">
+            <div class="bento-card">
+                <div class="bento-icon">1️⃣</div>
+                <h3>Register</h3>
+                <p class="bento-desc">Create an account in 20 seconds. No credit card needed.</p>
+            </div>
+            <div class="bento-card">
+                <div class="bento-icon">2️⃣</div>
+                <h3>Pick a slot</h3>
+                <p class="bento-desc">Choose your car, service, and the perfect time from our live calendar.</p>
+            </div>
+            <div class="bento-card">
+                <div class="bento-icon">3️⃣</div>
+                <h3>Relax</h3>
+                <p class="bento-desc">We handle the shine. Pay online, track your booking anytime.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2026 AquaShine — Premium car care, on demand.</p>
+    </footer>
+
+    <script src="/js/toast.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script>
+        // Redirect logged-in users to dashboard
+        fetch('/api/auth/me', { credentials: 'include' })
+            .then(res => { if (res.ok) window.location.href = '/dashboard.html'; })
+            .catch(() => {});
+    </script>
+</body>
+</html>

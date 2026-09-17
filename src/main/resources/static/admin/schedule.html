@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule - AquaShine Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/design-system.css">
+    <style>
+        .slot-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(90px,1fr)); gap:.5rem; }
+        .slot { padding:.7rem .5rem; border:1.5px solid var(--gray-200); border-radius:8px; background:white; cursor:pointer; text-align:center; font-size:.88rem; font-weight:500; transition:all var(--t); }
+        .slot:hover { border-color:var(--blue-500); }
+        .slot.blocked { background:#fee2e2; color:#dc2626; border-color:#fecaca; text-decoration:line-through; }
+        .slot.selected { background:var(--navy-900); color:white; border-color:var(--navy-900); }
+    </style>
+</head>
+<body>
+    <nav id="navbar"></nav>
+    <div class="app-layout">
+        <aside id="sidebar"></aside>
+        <main class="app-main">
+            <h1 style="font-size:1.85rem;margin-bottom:.35rem;">Schedule Management</h1>
+            <p class="text-muted" style="margin-bottom:1.5rem;">Block time slots for maintenance or holidays.</p>
+
+            <div class="card" style="max-width:900px;">
+                <div class="form-group">
+                    <label for="datePicker">Select Date</label>
+                    <input type="date" id="datePicker">
+                </div>
+
+                <h3 style="font-size:1rem;margin:1.5rem 0 .75rem;">Time Slots</h3>
+                <p class="text-muted" style="font-size:.85rem;margin-bottom:.75rem;">Click a slot to block it. Blocked slots appear red.</p>
+                <div class="slot-grid" id="slotGrid"></div>
+
+                <div style="display:flex;gap:.5rem;margin-top:1.5rem;">
+                    <button class="btn btn-primary" id="blockBtn">Block Selected</button>
+                    <button class="btn btn-ghost" id="clearBtn">Clear Selection</button>
+                </div>
+
+                <div id="blockedList" style="margin-top:2rem;"></div>
+            </div>
+        </main>
+    </div>
+    <footer><p>&copy; 2026 AquaShine - Admin Panel</p></footer>
+
+    <script src="/js/toast.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script src="/js/admin-sidebar.js"></script>
+    <script src="/js/admin.js"></script>
+    <script>
+        const ALL_SLOTS = [];
+        for (let h = 8; h < 20; h++) {
+            ALL_SLOTS.push(`${String(h).padStart(2, '0')}:00`);
+            ALL_SLOTS.push(`${String(h).padStart(2, '0')}:30`);
+        }
+        let selectedSlots = new Set();
+        let blockedSet = new Set();
+        const datePicker = document.getElementById('datePicker');
+        datePicker.value = new Date().toISOString().split('T')[0];
+
+        async function loadDay() {
+            selectedSlots.clear();
+            const res = await fetch(`/api/admin/schedule?date=${datePicker.value}`, { credentials: 'include' });
+            if (!res.ok) return;
+            const data = await res.json();
+            blockedSet = new Set(data.blocked.map(b => b.slotTime.substring(0,5)));
+            renderSlots(data.blocked);
+        }
+
+        function renderSlots(blockedList = []) {
+            const grid = document.getElementById('slotGrid');
+            grid.innerHTML = ALL_SLOTS.map(t => {
+                const blocked = blockedSet.has(t);
+                return `<div class="slot ${blocked ? 'blocked' : ''}" data-time="${t}">${t}</div>`;
+            }).join('');
+
+            grid.querySelectorAll('.slot').forEach(el => {
+                el.addEventListener('click', () => {
+                    const t = el.dataset.time;
+                    if (blockedSet.has(t)) return;
+                    if (selectedSlots.has(t)) {
+                        selectedSlots.delete(t);
+                        el.classList.remove('selected');
+                    } else {
+                        selectedSlots.add(t);
+                        el.classList.add('selected');
+                    }
+                });
+            });
+
+            // Blocked list
+            const list = document.getElementById('blockedList');
+            if (blockedList.length === 0) {
+                list.innerHTML = '';
+                return;
+            }
+            list.innerHTML = `
+                <h3 style="font-size:1rem;margin-bottom:.75rem;">Blocked on ${datePicker.value}</h3>
+                ${blockedList.map(b => `
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem 0;border-bottom:1px solid var(--gray-100);">
+                        <div><strong>${b.slotTime.substring(0,5)}</strong> — ${b.reason || 'No reason'}</div>
+                        <button class="btn btn-sm btn-ghost" onclick="unblock(${b.id})">Unblock</button>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        document.getElementById('blockBtn').addEventListener('click', async () => {
+            if (selectedSlots.size === 0) { showToast('Select slots to block', 'warning'); return; }
+            for (const t of selectedSlots) {
+                await fetch('/api/admin/schedule/block', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    credentials: 'include',
+                    body: JSON.stringify({ slotDate: datePicker.value, slotTime: t + ':00', reason: 'Blocked by admin' })
+                });
+            }
+            showToast(`Blocked ${selectedSlots.size} slot(s)`, 'success');
+            loadDay();
+        });
+
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            selectedSlots.clear();
+            document.querySelectorAll('.slot.selected').forEach(s => s.classList.remove('selected'));
+        });
+
+        async function unblock(id) {
+            await fetch(`/api/admin/schedule/${id}`, { method: 'DELETE', credentials: 'include' });
+            showToast('Unblocked', 'success');
+            loadDay();
+        }
+
+        datePicker.addEventListener('change', loadDay);
+
+        (async function init() {
+            const u = await requireAdmin();
+            if (!u) return;
+            loadDay();
+        })();
+    </script>
+</body>
+</html>

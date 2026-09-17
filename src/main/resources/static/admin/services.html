@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Services - AquaShine Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/design-system.css">
+</head>
+<body>
+    <nav id="navbar"></nav>
+    <div class="app-layout">
+        <aside id="sidebar"></aside>
+        <main class="app-main">
+            <h1 style="font-size:1.85rem;margin-bottom:.35rem;">Services & Pricing</h1>
+            <p class="text-muted" style="margin-bottom:1.5rem;">Edit wash services and their prices.</p>
+            <div id="servicesList" style="display:grid;gap:1rem;max-width:720px;"><p class="text-muted">Loading…</p></div>
+        </main>
+    </div>
+    <footer><p>&copy; 2026 AquaShine - Admin Panel</p></footer>
+
+    <script src="/js/toast.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script src="/js/admin-sidebar.js"></script>
+    <script src="/js/admin.js"></script>
+    <script>
+        async function loadServices() {
+            const res = await fetch('/api/admin/services', { credentials: 'include' });
+            if (!res.ok) return;
+            const services = await res.json();
+
+            document.getElementById('servicesList').innerHTML = services.map(s => `
+                <div class="card" style="padding:1.5rem;">
+                    <div style="display:grid;grid-template-columns:2fr 1fr auto;gap:1rem;align-items:end;">
+                        <div>
+                            <label class="text-muted" style="font-size:.78rem;font-weight:600;">Name</label>
+                            <input type="text" id="name-${s.id}" value="${s.name}" style="width:100%;padding:.6rem;border:1.5px solid var(--gray-200);border-radius:8px;font-family:inherit;">
+                            <div style="font-size:.75rem;color:var(--gray-400);margin-top:.35rem;">Category: ${s.category} · Code: ${s.code}</div>
+                        </div>
+                        <div>
+                            <label class="text-muted" style="font-size:.78rem;font-weight:600;">Base Price (₹)</label>
+                            <input type="number" id="price-${s.id}" value="${s.basePrice}" min="100" max="10000" style="width:100%;padding:.6rem;border:1.5px solid var(--gray-200);border-radius:8px;font-family:inherit;">
+                        </div>
+                        <button class="btn btn-primary" onclick="saveService(${s.id})">Save</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function saveService(id) {
+            const name = document.getElementById(`name-${id}`).value;
+            const basePrice = parseInt(document.getElementById(`price-${id}`).value);
+            const res = await fetch(`/api/admin/services/${id}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'include',
+                body: JSON.stringify({ name, basePrice })
+            });
+            const data = await res.json();
+            if (res.ok) { showToast('Service updated', 'success'); }
+            else { showToast(data.error || 'Failed', 'error'); }
+        }
+
+        (async function init() {
+            const user = await requireAdmin();
+            if (!user) return;
+            loadServices();
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Refunds - AquaShine Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/design-system.css">
+    <style>
+        .table { width:100%; border-collapse:collapse; background:white; border-radius:var(--r-md); overflow:hidden; box-shadow:var(--shadow-sm); }
+        .table th { text-align:left; padding:.85rem 1rem; background:var(--gray-50); font-size:.75rem; font-weight:700; color:var(--gray-500); text-transform:uppercase; letter-spacing:.05em; }
+        .table td { padding:.85rem 1rem; border-top:1px solid var(--gray-100); font-size:.9rem; }
+        .filter-bar { display:flex; gap:.5rem; margin-bottom:1.25rem; flex-wrap:wrap; }
+        .filter-btn { padding:.5rem 1rem; border:1.5px solid var(--gray-200); background:white; border-radius:999px; cursor:pointer; font-size:.85rem; font-weight:500; }
+        .filter-btn.active { background:var(--navy-900); color:white; border-color:var(--navy-900); }
+    </style>
+</head>
+<body>
+    <nav id="navbar"></nav>
+    <div class="app-layout">
+        <aside id="sidebar"></aside>
+        <main class="app-main">
+            <h1 style="font-size:1.85rem;margin-bottom:.35rem;">Refund Requests</h1>
+            <p class="text-muted" style="margin-bottom:1.5rem;">Approve or reject customer refund requests.</p>
+
+            <div class="filter-bar" id="filters">
+                <button class="filter-btn active" data-status="">All</button>
+                <button class="filter-btn" data-status="PENDING">Pending</button>
+                <button class="filter-btn" data-status="APPROVED">Approved</button>
+                <button class="filter-btn" data-status="REJECTED">Rejected</button>
+            </div>
+
+            <div id="refundsTable"><p class="text-muted">Loading…</p></div>
+        </main>
+    </div>
+    <footer><p>&copy; 2026 AquaShine - Admin Panel</p></footer>
+
+    <script src="/js/toast.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script src="/js/admin-sidebar.js"></script>
+    <script src="/js/admin.js"></script>
+    <script>
+        let currentStatus = '';
+
+        async function load() {
+            const url = currentStatus ? `/api/admin/refunds?status=${currentStatus}` : '/api/admin/refunds';
+            const res = await fetch(url, { credentials: 'include' });
+            if (!res.ok) return;
+            const items = await res.json();
+
+            if (items.length === 0) {
+                document.getElementById('refundsTable').innerHTML = `
+                    <div class="empty-state" style="max-width:none;">
+                        <div class="empty-state-icon">💸</div>
+                        <h3>No refund requests</h3>
+                        <p>New refund requests will appear here.</p>
+                    </div>`;
+                return;
+            }
+
+            document.getElementById('refundsTable').innerHTML = `
+                <table class="table">
+                    <thead>
+                        <tr><th>ID</th><th>Booking</th><th>User</th><th>Amount</th><th>Reason</th><th>Status</th><th>Requested</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody>
+                        ${items.map(r => `
+                            <tr>
+                                <td>#${r.id}</td>
+                                <td>#${r.bookingId}</td>
+                                <td>${r.userEmail}</td>
+                                <td><strong>${inr(r.amount)}</strong></td>
+                                <td style="max-width:200px;font-size:.85rem;color:var(--gray-600);">${r.reason || '—'}</td>
+                                <td>${statusBadge(r.status)}</td>
+                                <td>${fmtDateTime(r.createdAt)}</td>
+                                <td>
+                                    ${r.status === 'PENDING' ? `
+                                        <button class="btn btn-sm" style="background:var(--success);color:white;" onclick="approve(${r.id})">✓ Approve</button>
+                                        <button class="btn btn-sm btn-danger" onclick="reject(${r.id})">✕ Reject</button>
+                                    ` : '—'}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        async function approve(id) {
+            const res = await fetch(`/api/admin/refunds/${id}/approve`, { method: 'POST', credentials: 'include' });
+            if (res.ok) { showToast('Approved', 'success'); load(); }
+        }
+
+        async function reject(id) {
+            const res = await fetch(`/api/admin/refunds/${id}/reject`, { method: 'POST', credentials: 'include' });
+            if (res.ok) { showToast('Rejected', 'info'); load(); }
+        }
+
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentStatus = btn.dataset.status;
+                load();
+            });
+        });
+
+        (async function init() {
+            const u = await requireAdmin();
+            if (!u) return;
+            load();
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicles - AquaShine Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/design-system.css">
+    <style>
+        .table { width:100%; border-collapse:collapse; background:white; border-radius:var(--r-md); overflow:hidden; box-shadow:var(--shadow-sm); }
+        .table th { text-align:left; padding:.85rem 1rem; background:var(--gray-50); font-size:.75rem; font-weight:700; color:var(--gray-500); text-transform:uppercase; }
+        .table td { padding:.85rem 1rem; border-top:1px solid var(--gray-100); font-size:.9rem; }
+    </style>
+</head>
+<body>
+    <nav id="navbar"></nav>
+    <div class="app-layout">
+        <aside id="sidebar"></aside>
+        <main class="app-main">
+            <h1 style="font-size:1.85rem;margin-bottom:.35rem;">All Vehicles</h1>
+            <p class="text-muted" style="margin-bottom:1.5rem;">Every vehicle registered on the platform.</p>
+            <div id="vehiclesTable"><p class="text-muted">Loading…</p></div>
+        </main>
+    </div>
+    <footer><p>&copy; 2026 AquaShine - Admin Panel</p></footer>
+
+    <script src="/js/toast.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script src="/js/admin-sidebar.js"></script>
+    <script src="/js/admin.js"></script>
+    <script>
+        async function load() {
+            const res = await fetch('/api/admin/vehicles', { credentials: 'include' });
+            if (!res.ok) return;
+            const list = await res.json();
+
+            if (list.length === 0) {
+                document.getElementById('vehiclesTable').innerHTML = `
+                    <div class="empty-state" style="max-width:none;">
+                        <div class="empty-state-icon">🚗</div>
+                        <h3>No vehicles yet</h3>
+                        <p>Vehicles registered by users will appear here.</p>
+                    </div>`;
+                return;
+            }
+
+            document.getElementById('vehiclesTable').innerHTML = `
+                <table class="table">
+                    <thead><tr><th>ID</th><th>Owner</th><th>Plate</th><th>Type</th><th>Make/Model</th><th>Year</th></tr></thead>
+                    <tbody>
+                        ${list.map(v => `
+                            <tr>
+                                <td>#${v.id}</td>
+                                <td>${v.userEmail}</td>
+                                <td><strong>${v.plateNumber}</strong></td>
+                                <td>${v.type}</td>
+                                <td>${(v.make || '') + ' ' + (v.model || '')}</td>
+                                <td>${v.year || '—'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        (async function init() {
+            const u = await requireAdmin();
+            if (!u) return;
+            load();
+        })();
+    </script>
+</body>
+</html>

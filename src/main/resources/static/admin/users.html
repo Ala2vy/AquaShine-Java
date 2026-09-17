@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Users - AquaShine Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/design-system.css">
+    <style>
+        .table { width:100%; border-collapse:collapse; background:white; border-radius:var(--r-md); overflow:hidden; box-shadow:var(--shadow-sm); }
+        .table th { text-align:left; padding:.85rem 1rem; background:var(--gray-50); font-size:.75rem; font-weight:700; color:var(--gray-500); text-transform:uppercase; letter-spacing:.05em; }
+        .table td { padding:.85rem 1rem; border-top:1px solid var(--gray-100); font-size:.9rem; }
+        .table tr:hover { background:var(--gray-50); }
+    </style>
+</head>
+<body>
+    <nav id="navbar"></nav>
+    <div class="app-layout">
+        <aside id="sidebar"></aside>
+        <main class="app-main">
+            <h1 style="font-size:1.85rem;margin-bottom:.35rem;">Manage Users</h1>
+            <p class="text-muted" style="margin-bottom:1.5rem;">All registered users.</p>
+            <div id="usersTable"><p class="text-muted">Loading…</p></div>
+        </main>
+    </div>
+    <footer><p>&copy; 2026 AquaShine - Admin Panel</p></footer>
+
+    <script src="/js/toast.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script src="/js/admin-sidebar.js"></script>
+    <script src="/js/admin.js"></script>
+    <script>
+        async function loadUsers() {
+            const res = await fetch('/api/admin/users', { credentials: 'include' });
+            if (!res.ok) return;
+            const users = await res.json();
+
+            document.getElementById('usersTable').innerHTML = `
+                <table class="table">
+                    <thead>
+                        <tr><th>ID</th><th>Email</th><th>Name</th><th>Phone</th><th>Role</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody>
+                        ${users.map(u => `
+                            <tr>
+                                <td>#${u.id}</td>
+                                <td>${u.email}</td>
+                                <td>${u.fullName}</td>
+                                <td>${u.phone}</td>
+                                <td>${statusBadge(u.role)}</td>
+                                <td>
+                                    ${u.role === 'USER'
+                                        ? `<button class="btn btn-sm btn-ghost" onclick="setRole(${u.id},'ADMIN')">Make Admin</button>`
+                                        : `<button class="btn btn-sm btn-ghost" onclick="setRole(${u.id},'USER')">Demote</button>`}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        async function setRole(id, role) {
+            const res = await fetch(`/api/admin/users/${id}/role`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'include',
+                body: JSON.stringify({ role })
+            });
+            if (res.ok) { showToast('Role updated', 'success'); loadUsers(); }
+            else { showToast('Failed', 'error'); }
+        }
+
+        (async function init() {
+            const user = await requireAdmin();
+            if (!user) return;
+            loadUsers();
+        })();
+    </script>
+</body>
+</html>

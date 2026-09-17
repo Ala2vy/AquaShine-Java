@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Promos - AquaShine Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/design-system.css">
+    <style>
+        .table { width:100%; border-collapse:collapse; background:white; border-radius:var(--r-md); overflow:hidden; box-shadow:var(--shadow-sm); }
+        .table th { text-align:left; padding:.85rem 1rem; background:var(--gray-50); font-size:.75rem; font-weight:700; color:var(--gray-500); text-transform:uppercase; }
+        .table td { padding:.85rem 1rem; border-top:1px solid var(--gray-100); font-size:.9rem; }
+    </style>
+</head>
+<body>
+    <nav id="navbar"></nav>
+    <div class="app-layout">
+        <aside id="sidebar"></aside>
+        <main class="app-main">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
+                <div>
+                    <h1 style="font-size:1.85rem;margin-bottom:.25rem;">Promo Codes</h1>
+                    <p class="text-muted">Create and manage discount codes.</p>
+                </div>
+                <button class="btn btn-primary" onclick="document.getElementById('createForm').style.display='block'">+ New Promo</button>
+            </div>
+
+            <div id="createForm" style="display:none;background:white;border-radius:var(--r-md);padding:1.5rem;margin-bottom:1.5rem;box-shadow:var(--shadow-sm);">
+                <h3 style="font-size:1.05rem;margin-bottom:1rem;">Create Promo</h3>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;">
+                    <div class="form-group">
+                        <label>Code</label>
+                        <input type="text" id="newCode" placeholder="SUMMER25" maxlength="20" style="text-transform:uppercase;">
+                    </div>
+                    <div class="form-group">
+                        <label>Discount %</label>
+                        <input type="number" id="newPercent" min="1" max="100" value="10">
+                    </div>
+                    <div class="form-group">
+                        <label>Min Amount (₹)</label>
+                        <input type="number" id="newMin" min="0" value="500">
+                    </div>
+                    <div class="form-group">
+                        <label>Max Uses</label>
+                        <input type="number" id="newMax" min="1" value="100">
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="createPromo()">Create</button>
+                <button class="btn btn-ghost" onclick="document.getElementById('createForm').style.display='none'">Cancel</button>
+            </div>
+
+            <div id="promosTable"><p class="text-muted">Loading…</p></div>
+        </main>
+    </div>
+    <footer><p>&copy; 2026 AquaShine - Admin Panel</p></footer>
+
+    <script src="/js/toast.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script src="/js/admin-sidebar.js"></script>
+    <script src="/js/admin.js"></script>
+    <script>
+        async function load() {
+            const res = await fetch('/api/admin/promos', { credentials: 'include' });
+            if (!res.ok) return;
+            const list = await res.json();
+
+            document.getElementById('promosTable').innerHTML = `
+                <table class="table">
+                    <thead>
+                        <tr><th>Code</th><th>Discount</th><th>Min Amount</th><th>Uses</th><th>Expiry</th><th>Status</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody>
+                        ${list.map(p => `
+                            <tr>
+                                <td><strong style="font-family:monospace;">${p.code}</strong></td>
+                                <td>${p.discountPercent}%</td>
+                                <td>${inr(p.minAmount)}</td>
+                                <td>${p.usedCount} / ${p.maxUses}</td>
+                                <td>${fmtDate(p.expiryDate)}</td>
+                                <td>${p.active ? statusBadge('SUCCESS') : statusBadge('CANCELLED')}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-ghost" onclick="toggle(${p.id})">${p.active ? 'Disable' : 'Enable'}</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        async function toggle(id) {
+            const res = await fetch(`/api/admin/promos/${id}/toggle`, { method: 'POST', credentials: 'include' });
+            if (res.ok) { showToast('Toggled', 'success'); load(); }
+        }
+
+        async function createPromo() {
+            const body = {
+                code: document.getElementById('newCode').value.toUpperCase(),
+                discountPercent: parseInt(document.getElementById('newPercent').value),
+                minAmount: parseInt(document.getElementById('newMin').value),
+                maxUses: parseInt(document.getElementById('newMax').value)
+            };
+            if (!body.code) { showToast('Code required', 'warning'); return; }
+
+            const res = await fetch('/api/admin/promos', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'include',
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showToast('Promo created', 'success');
+                document.getElementById('createForm').style.display = 'none';
+                document.getElementById('newCode').value = '';
+                load();
+            } else { showToast(data.error || 'Failed', 'error'); }
+        }
+
+        (async function init() {
+            const u = await requireAdmin();
+            if (!u) return;
+            load();
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment - AquaShine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/design-system.css">
+    <style>
+        .pay-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 2rem;
+            max-width: 1000px;
+            margin: 2rem auto;
+            align-items: start;
+        }
+        @media (max-width: 900px) {
+            .pay-layout { grid-template-columns: 1fr; }
+        }
+
+        /* Card preview */
+        .card-preview {
+            aspect-ratio: 1.586;
+            background: linear-gradient(135deg, var(--navy-900) 0%, var(--navy-700) 50%, var(--blue-600) 100%);
+            border-radius: var(--r-xl);
+            padding: 1.75rem;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 20px 48px rgba(10,17,40,.3);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+        .card-preview::before {
+            content: "";
+            position: absolute;
+            top: -40%; right: -40%;
+            width: 80%; height: 180%;
+            background: radial-gradient(circle, rgba(0,212,255,.25) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .card-chip {
+            width: 45px; height: 32px;
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            border-radius: 6px;
+            position: relative;
+            z-index: 1;
+        }
+        .card-number {
+            font-family: 'Courier New', monospace;
+            font-size: 1.35rem;
+            letter-spacing: 3px;
+            font-weight: 600;
+            position: relative;
+            z-index: 1;
+        }
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: .75rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            opacity: .85;
+            position: relative;
+            z-index: 1;
+        }
+        .card-brand {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 800;
+            font-size: 1.05rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Promo chip */
+        .promo-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            padding: .35rem .75rem;
+            background: rgba(30,111,255,.08);
+            color: var(--blue-600);
+            border: 1px dashed var(--blue-500);
+            border-radius: 8px;
+            font-size: .78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--t);
+            margin-right: .35rem;
+            margin-bottom: .35rem;
+        }
+        .promo-chip:hover {
+            background: rgba(30,111,255,.14);
+        }
+
+        /* Price summary */
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            padding: .7rem 0;
+            font-size: .92rem;
+            color: var(--gray-600);
+        }
+        .price-row span:last-child { color: var(--navy-900); font-weight: 500; }
+        .price-row.discount span:last-child { color: var(--success); font-weight: 600; }
+        .price-row.total {
+            border-top: 2px solid var(--gray-100);
+            margin-top: .5rem;
+            padding-top: 1rem;
+            font-size: 1.15rem;
+            font-weight: 700;
+        }
+        .price-row.total span:last-child {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1.5rem;
+            color: var(--blue-600);
+            font-weight: 800;
+        }
+    </style>
+</head>
+<body>
+    <nav id="navbar"></nav>
+
+    <main class="container">
+        <div style="max-width:1000px;margin:0 auto;">
+            <h1 style="font-size:1.85rem;margin-bottom:.35rem;">Complete Payment</h1>
+            <p class="text-muted" style="margin-bottom:1.5rem;">Secure checkout for your wash booking.</p>
+        </div>
+
+        <div class="pay-layout">
+            <!-- LEFT: Card form -->
+            <div>
+                <div class="card-preview">
+                    <div class="card-chip"></div>
+                    <div class="card-number" id="cardDisplay">Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢ Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢ Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢ Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢</div>
+                    <div class="card-meta">
+                        <span id="cardHolder">CARDHOLDER NAME</span>
+                        <span>12/28</span>
+                    </div>
+                    <div class="card-brand" style="text-align:right;">AquaShine Pay</div>
+                </div>
+
+                <div class="card">
+                    <h3 style="font-size:1.05rem;margin-bottom:1.15rem;">Card Details</h3>
+                    <form id="paymentForm">
+                        <div class="form-group">
+                            <label for="cardNumber">Card Number</label>
+                            <input type="text" id="cardNumber" placeholder="4111 1111 1111 1111" maxlength="19" required autocomplete="cc-number">
+                            
+                        </div>
+
+                        <div class="form-group">
+                            <label for="promoCode">Promo Code <span style="color:var(--gray-400);font-weight:400;">(optional)</span></label>
+                            <div style="display:flex;gap:.5rem;">
+                                <input type="text" id="promoCode" placeholder="WASH50" style="flex:1;text-transform:uppercase;">
+                                <button type="button" id="validatePromo" class="btn btn-secondary">Apply</button>
+                            </div>
+                            <p id="promoMsg" style="font-size:.85rem;margin-top:.5rem;min-height:1.1rem;"></p>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block btn-lg mt-2" id="payBtn">
+                            Pay Now
+                        </button>
+                        <p id="error" class="error-message"></p>
+                    </form>
+                </div>
+            </div>
+
+            <!-- RIGHT: Order summary -->
+            <div style="position:sticky;top:calc(var(--navbar-h) + 1rem);">
+                <div class="card">
+                    <h3 style="font-size:1.05rem;margin-bottom:1rem;">Order Summary</h3>
+
+                    <div id="bookingInfo" style="background:var(--gray-50);border-radius:var(--r-sm);padding:1rem;margin-bottom:1rem;">
+                        <div style="font-size:.85rem;color:var(--gray-500);">LoadingÃ¢â‚¬Â¦</div>
+                    </div>
+
+                    <div class="price-row">
+                        <span>Original amount</span>
+                        <span id="origAmt">Ã¢â€šÂ¹0</span>
+                    </div>
+                    <div class="price-row discount" id="discountRow" style="display:none;">
+                        <span>Discount</span>
+                        <span id="discAmt">-Ã¢â€šÂ¹0</span>
+                    </div>
+                    <div class="price-row total">
+                        <span>Total</span>
+                        <span id="finalAmt">Ã¢â€šÂ¹0</span>
+                    </div>
+
+                    <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px dashed var(--gray-200);">
+                        <div style="font-size:.78rem;font-weight:700;color:var(--gray-400);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.65rem;">Available Promos</div>
+                        <div id="promoList"></div>
+                    </div>
+
+                    <div style="display:flex;align-items:center;gap:.5rem;margin-top:1.5rem;font-size:.8rem;color:var(--gray-400);">
+                        <span>Ã°Å¸â€â€™</span>
+                        <span>Secured by AquaShine Pay Ã‚Â· This is a demo</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer><p>&copy; 2026 AquaShine - STQA Lab Project</p></footer>
+
+    <script src="/js/toast.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script src="/js/payment-v2.js"></script>
+</body>
+</html>

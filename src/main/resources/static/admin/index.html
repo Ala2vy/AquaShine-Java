@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - AquaShine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/design-system.css">
+    <style>
+        .admin-hero {
+            background: linear-gradient(135deg, #0a1128 0%, #101b3d 100%);
+            border-radius: var(--r-lg);
+            padding: 2rem;
+            color: white;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .admin-hero::before {
+            content: "";
+            position: absolute;
+            top: -50%; right: -20%;
+            width: 60%; height: 200%;
+            background: radial-gradient(circle, rgba(0,212,255,.15) 0%, transparent 60%);
+        }
+        .admin-hero h1 { color: white; font-size: 2rem; margin-bottom: .35rem; position: relative; }
+        .admin-hero p { color: rgba(255,255,255,.7); position: relative; }
+        .admin-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            padding: .35rem .85rem;
+            background: rgba(0,212,255,.15);
+            color: #00d4ff;
+            border-radius: 999px;
+            font-size: .72rem;
+            font-weight: 700;
+            letter-spacing: .08em;
+            margin-bottom: .75rem;
+            position: relative;
+        }
+        .admin-badge svg {
+            width: 12px;
+            height: 12px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+    </style>
+</head>
+<body>
+    <nav id="navbar"></nav>
+    <div class="app-layout">
+        <aside id="sidebar"></aside>
+        <main class="app-main">
+            <div class="admin-hero">
+                <span class="admin-badge">
+                    <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    ADMINISTRATOR
+                </span>
+                <h1>Control Center</h1>
+                <p>Manage bookings, users, payments, and services.</p>
+            </div>
+
+            <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));">
+                <div class="stat-card">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-value" id="statTodayRevenue">₹0</div>
+                    <div class="stat-label">Today's Revenue</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💵</div>
+                    <div class="stat-value" id="statTotalRevenue">₹0</div>
+                    <div class="stat-label">Total Revenue</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-value" id="statActive">0</div>
+                    <div class="stat-label">Active Bookings</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-value" id="statToday">0</div>
+                    <div class="stat-label">Today's Bookings</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-value" id="statUsers">0</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🚗</div>
+                    <div class="stat-value" id="statVehicles">0</div>
+                    <div class="stat-label">Vehicles</div>
+                </div>
+            </div>
+
+            <h2 style="font-size:1.25rem;margin:2rem 0 1rem;">Quick Actions</h2>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;">
+                <a href="/admin/bookings.html" class="card" style="text-decoration:none;color:inherit;padding:1.5rem;">
+                    <div style="font-size:2rem;margin-bottom:.5rem;">📋</div>
+                    <h3 style="font-size:1rem;margin-bottom:.25rem;">Manage Bookings</h3>
+                    <p class="text-muted" style="font-size:.85rem;">View, complete, or cancel</p>
+                </a>
+                <a href="/admin/users.html" class="card" style="text-decoration:none;color:inherit;padding:1.5rem;">
+                    <div style="font-size:2rem;margin-bottom:.5rem;">👥</div>
+                    <h3 style="font-size:1rem;margin-bottom:.25rem;">Manage Users</h3>
+                    <p class="text-muted" style="font-size:.85rem;">View, promote, disable</p>
+                </a>
+                <a href="/admin/services.html" class="card" style="text-decoration:none;color:inherit;padding:1.5rem;">
+                    <div style="font-size:2rem;margin-bottom:.5rem;">💧</div>
+                    <h3 style="font-size:1rem;margin-bottom:.25rem;">Services & Pricing</h3>
+                    <p class="text-muted" style="font-size:.85rem;">Edit services and prices</p>
+                </a>
+                <a href="/admin/payments.html" class="card" style="text-decoration:none;color:inherit;padding:1.5rem;">
+                    <div style="font-size:2rem;margin-bottom:.5rem;">💳</div>
+                    <h3 style="font-size:1rem;margin-bottom:.25rem;">Payments</h3>
+                    <p class="text-muted" style="font-size:.85rem;">View revenue and transactions</p>
+                </a>
+            </div>
+        </main>
+    </div>
+    <footer><p>&copy; 2026 AquaShine - Admin Panel</p></footer>
+
+    <script src="/js/toast.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script src="/js/admin-sidebar.js"></script>
+    <script src="/js/admin.js"></script>
+    <script>
+        (async function loadAdmin() {
+            const user = await requireAdmin();
+            if (!user) return;
+            try {
+                const res = await fetch('/api/admin/stats', { credentials: 'include' });
+                if (!res.ok) { showToast('Failed to load stats', 'error'); return; }
+                const s = await res.json();
+                document.getElementById('statTodayRevenue').textContent = inr(s.todayRevenue);
+                document.getElementById('statTotalRevenue').textContent = inr(s.totalRevenue);
+                document.getElementById('statActive').textContent = s.activeBookings;
+                document.getElementById('statToday').textContent = s.todayBookings;
+                document.getElementById('statUsers').textContent = s.totalUsers;
+                document.getElementById('statVehicles').textContent = s.totalVehicles;
+            } catch {
+                showToast('Failed to load stats', 'error');
+            }
+        })();
+    </script>
+</body>
+</html>

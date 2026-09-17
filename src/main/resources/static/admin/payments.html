@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payments - AquaShine Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/design-system.css">
+    <style>
+        .table { width:100%; border-collapse:collapse; background:white; border-radius:var(--r-md); overflow:hidden; box-shadow:var(--shadow-sm); }
+        .table th { text-align:left; padding:.85rem 1rem; background:var(--gray-50); font-size:.75rem; font-weight:700; color:var(--gray-500); text-transform:uppercase; letter-spacing:.05em; }
+        .table td { padding:.85rem 1rem; border-top:1px solid var(--gray-100); font-size:.9rem; }
+        .table tr:hover { background:var(--gray-50); }
+        .kpi { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1rem; margin-bottom:2rem; }
+        .kpi-card { background:white; padding:1.5rem; border-radius:var(--r-md); box-shadow:var(--shadow-sm); border-left:4px solid var(--blue-600); }
+        .kpi-card.green { border-left-color:var(--success); }
+        .kpi-card.amber { border-left-color:#f59e0b; }
+        .kpi-label { font-size:.78rem; font-weight:600; color:var(--gray-500); text-transform:uppercase; letter-spacing:.05em; }
+        .kpi-value { font-family:'Plus Jakarta Sans',sans-serif; font-size:1.85rem; font-weight:800; color:var(--navy-900); margin-top:.35rem; }
+    </style>
+</head>
+<body>
+    <nav id="navbar"></nav>
+    <div class="app-layout">
+        <aside id="sidebar"></aside>
+        <main class="app-main">
+            <h1 style="font-size:1.85rem;margin-bottom:.35rem;">Payments</h1>
+            <p class="text-muted" style="margin-bottom:1.5rem;">All transactions and revenue.</p>
+
+            <div class="kpi" id="kpis">
+                <div class="kpi-card green">
+                    <div class="kpi-label">Total Collected</div>
+                    <div class="kpi-value" id="kpiTotal">₹0</div>
+                </div>
+                <div class="kpi-card amber">
+                    <div class="kpi-label">Total Discounts</div>
+                    <div class="kpi-value" id="kpiDiscount">₹0</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Transactions</div>
+                    <div class="kpi-value" id="kpiCount">0</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Avg Transaction</div>
+                    <div class="kpi-value" id="kpiAvg">₹0</div>
+                </div>
+            </div>
+
+            <div id="paymentsTable"><p class="text-muted">Loading…</p></div>
+        </main>
+    </div>
+    <footer><p>&copy; 2026 AquaShine - Admin Panel</p></footer>
+
+    <script src="/js/toast.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script src="/js/admin-sidebar.js"></script>
+    <script src="/js/admin.js"></script>
+    <script>
+        async function load() {
+            const res = await fetch('/api/admin/payments', { credentials: 'include' });
+            if (!res.ok) {
+                document.getElementById('paymentsTable').innerHTML = '<p class="text-muted">Failed to load.</p>';
+                return;
+            }
+            const payments = await res.json();
+
+            let totalPaid = 0, totalDiscount = 0;
+            payments.forEach(p => {
+                totalPaid += (p.finalAmount || 0);
+                totalDiscount += (p.discountAmount || 0);
+            });
+            document.getElementById('kpiTotal').textContent = inr(totalPaid);
+            document.getElementById('kpiDiscount').textContent = inr(totalDiscount);
+            document.getElementById('kpiCount').textContent = payments.length;
+            document.getElementById('kpiAvg').textContent = payments.length
+                ? inr(Math.round(totalPaid / payments.length))
+                : '₹0';
+
+            if (payments.length === 0) {
+                document.getElementById('paymentsTable').innerHTML = `
+                    <div class="empty-state" style="max-width:none;">
+                        <div class="empty-state-icon">💳</div>
+                        <h3>No payments yet</h3>
+                        <p>Completed payments will appear here.</p>
+                    </div>`;
+                return;
+            }
+
+            document.getElementById('paymentsTable').innerHTML = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Booking</th>
+                            <th>Customer</th>
+                            <th>Original</th>
+                            <th>Discount</th>
+                            <th>Paid</th>
+                            <th>Promo</th>
+                            <th>Transaction</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${payments.map(p => `
+                            <tr>
+                                <td>#${p.id}</td>
+                                <td>#${p.bookingId}</td>
+                                <td>${p.userEmail || '—'}</td>
+                                <td>${inr(p.originalAmount)}</td>
+                                <td style="color:${p.discountAmount > 0 ? 'var(--success)' : 'var(--gray-400)'};">
+                                    ${p.discountAmount > 0 ? '-' + inr(p.discountAmount) : '—'}
+                                </td>
+                                <td><strong style="color:var(--blue-600);">${inr(p.finalAmount)}</strong></td>
+                                <td>${p.promoCode || '—'}</td>
+                                <td style="font-family:'Courier New',monospace;font-size:.78rem;">${p.transactionId || '—'}</td>
+                                <td>${fmtDateTime(p.createdAt)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        (async function init() {
+            const u = await requireAdmin();
+            if (!u) return;
+            load();
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Vehicle - AquaShine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/design-system.css">
+</head>
+<body>
+    <nav id="navbar"></nav>
+
+    <div class="app-layout">
+        <aside id="sidebar"></aside>
+
+        <main class="app-main">
+            <div class="dashboard-header" style="margin-bottom:1.75rem;">
+                <h1 style="font-size:1.85rem;">Add Vehicle</h1>
+                <p class="text-muted" style="margin-top:.25rem;">Register a new car to your account.</p>
+            </div>
+
+            <div class="card" style="max-width:560px;">
+                <form id="addVehicleForm">
+                    <div class="form-group">
+                        <label for="plateNumber">Plate Number</label>
+                        <input type="text" id="plateNumber" placeholder="KA01AB1234" required maxlength="15">
+                        <div class="hint">3 to 15 characters</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="type">Type</label>
+                        <select id="type" required>
+                            <option value="">-- Select Type --</option>
+                            <option value="HATCHBACK">🚗 Hatchback</option>
+                            <option value="SEDAN">🚙 Sedan</option>
+                            <option value="SUV">🚐 SUV</option>
+                        </select>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                        <div class="form-group">
+                            <label for="make">Make</label>
+                            <input type="text" id="make" placeholder="Toyota">
+                        </div>
+                        <div class="form-group">
+                            <label for="model">Model</label>
+                            <input type="text" id="model" placeholder="Camry">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="year">Year</label>
+                        <input type="number" id="year" placeholder="2020" required min="1900" max="2030">
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="addBtn">Add Vehicle</button>
+                    <a href="/auth/vehicles.html" class="btn btn-ghost mt-2">← Back to vehicles</a>
+                    <p id="error" class="error-message"></p>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <footer><p>&copy; 2026 AquaShine - STQA Lab Project</p></footer>
+
+    <script src="/js/toast.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script src="/js/sidebar.js"></script>
+    <script>
+        window.__returnTo = new URLSearchParams(window.location.search).get("returnTo");
+    </script>
+    <script src="/js/vehicles.js"></script>
+</body>
+</html>

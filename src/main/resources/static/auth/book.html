@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book a Wash - AquaShine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/design-system.css">
+    <style>
+        /* Wizard-specific */
+        .wizard-shell {
+            background: white;
+            border-radius: var(--r-lg);
+            box-shadow: var(--shadow-md);
+            padding: 2rem;
+            max-width: 720px;
+            margin: 2rem auto;
+        }
+        .wizard-steps {
+            display: flex;
+            gap: .35rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--gray-100);
+        }
+        .wstep {
+            flex: 1;
+            text-align: center;
+            font-size: .8rem;
+            font-weight: 600;
+            color: var(--gray-400);
+            position: relative;
+            padding: .5rem .25rem;
+            transition: color var(--t);
+        }
+        .wstep .num {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            margin: 0 auto .35rem;
+            border-radius: 50%;
+            background: var(--gray-100);
+            color: var(--gray-400);
+            font-weight: 700;
+            font-size: .82rem;
+            transition: all var(--t) var(--ease-spring);
+        }
+        .wstep.active .num {
+            background: linear-gradient(135deg, var(--blue-600), var(--aqua-500));
+            color: white;
+            box-shadow: 0 4px 14px rgba(30,111,255,.35);
+            transform: scale(1.1);
+        }
+        .wstep.active { color: var(--navy-900); }
+        .wstep.done .num {
+            background: var(--success);
+            color: white;
+        }
+        .wstep.done { color: var(--success); }
+
+        .wpanel { display: none; animation: panelIn .35s var(--ease-out); }
+        .wpanel.active { display: block; }
+
+        @keyframes panelIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .wtitle {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-bottom: .35rem;
+            color: var(--navy-900);
+        }
+        .wsubtitle { color: var(--gray-500); font-size: .9rem; margin-bottom: 1.5rem; }
+
+        /* Choice cards */
+        .choice-list { display: grid; gap: .65rem; }
+
+        .choice {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.15rem;
+            background: white;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--r-md);
+            cursor: pointer;
+            transition: all var(--t) var(--ease);
+            position: relative;
+        }
+
+        .choice:hover {
+            border-color: var(--blue-400);
+            background: rgba(30,111,255,.02);
+        }
+
+        .choice.selected {
+            border-color: var(--blue-600);
+            background: rgba(30,111,255,.04);
+            box-shadow: 0 4px 14px rgba(30,111,255,.12);
+        }
+
+        .choice.selected::after {
+            content: "✓";
+            position: absolute;
+            top: .65rem;
+            right: .65rem;
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--blue-600);
+            color: white;
+            border-radius: 50%;
+            font-size: .75rem;
+            font-weight: 700;
+            animation: pop .3s var(--ease-spring);
+        }
+
+        @keyframes pop {
+            0% { transform: scale(0); }
+            100% { transform: scale(1); }
+        }
+
+        .choice-icon { font-size: 1.6rem; flex-shrink: 0; }
+        .choice-body { flex: 1; }
+        .choice-title { font-weight: 600; font-size: .98rem; color: var(--navy-900); }
+        .choice-sub { font-size: .85rem; color: var(--gray-500); margin-top: .15rem; }
+
+        /* Time slot grid */
+        .slot-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: .5rem;
+        }
+        .slot {
+            padding: .7rem .5rem;
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--r-sm);
+            background: white;
+            cursor: pointer;
+            font-size: .88rem;
+            font-weight: 500;
+            transition: all var(--t);
+            text-align: center;
+            color: var(--gray-700);
+        }
+        .slot:hover:not(:disabled) {
+            border-color: var(--blue-600);
+            color: var(--blue-600);
+        }
+        .slot.selected {
+            background: linear-gradient(135deg, var(--blue-600), var(--blue-500));
+            color: white;
+            border-color: var(--blue-600);
+            box-shadow: 0 4px 12px rgba(30,111,255,.3);
+        }
+        .slot.taken {
+            background: var(--gray-100);
+            color: var(--gray-400);
+            cursor: not-allowed;
+            text-decoration: line-through;
+        }
+
+        /* Summary bar */
+        .summary-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            background: linear-gradient(135deg, var(--navy-900), var(--navy-700));
+            border-radius: var(--r-md);
+            color: white;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+        .summary-bar .items { font-size: .85rem; color: rgba(255,255,255,.75); line-height: 1.5; }
+        .summary-bar .items strong { color: white; font-size: .95rem; display: block; }
+        .summary-bar .price {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--aqua-400);
+        }
+
+        /* Nav buttons */
+        .wnav {
+            display: flex;
+            gap: .65rem;
+            margin-top: 1.5rem;
+        }
+        .wnav .btn { flex: 1; }
+        .wnav .btn-ghost { flex: 0 0 auto; padding-left: 1.25rem; padding-right: 1.25rem; }
+
+        /* Empty state card */
+        .empty-card {
+            text-align: center;
+            padding: 3rem 2rem;
+            background: white;
+            border: 2px dashed var(--gray-200);
+            border-radius: var(--r-lg);
+        }
+        .empty-card .icon { font-size: 4rem; margin-bottom: 1rem; }
+        .empty-card h3 { font-size: 1.3rem; margin-bottom: .5rem; }
+        .empty-card p { color: var(--gray-500); margin-bottom: 1.5rem; }
+    </style>
+</head>
+<body>
+    <nav id="navbar"></nav>
+
+    <div class="app-layout">
+        <aside id="sidebar"></aside>
+
+        <main class="app-main">
+            <!-- Loading -->
+            <div id="loadingView" class="wizard-shell" style="text-align:center;">
+                <div class="skeleton" style="height:60px;margin-bottom:1rem;"></div>
+                <div class="skeleton" style="height:120px;margin-bottom:1rem;"></div>
+                <div class="skeleton" style="height:60px;"></div>
+            </div>
+
+            <!-- Empty vehicles -->
+            <div id="emptyView" style="display:none;max-width:520px;margin:2rem auto;">
+                <div class="empty-card">
+                    <div class="icon">🚗</div>
+                    <h3>Add a vehicle first</h3>
+                    <p>You need at least one registered vehicle to book a wash.</p>
+                    <a href="/auth/add-vehicle.html?returnTo=book" class="btn btn-primary btn-lg">+ Add Your First Vehicle</a>
+                </div>
+            </div>
+
+            <!-- Wizard -->
+            <div id="wizardView" class="wizard-shell" style="display:none;">
+                <div class="wizard-steps" id="wizardSteps">
+                    <div class="wstep active" data-step="1"><div class="num">1</div>Vehicle</div>
+                    <div class="wstep" data-step="2"><div class="num">2</div>Service</div>
+                    <div class="wstep" data-step="3"><div class="num">3</div>Date</div>
+                    <div class="wstep" data-step="4"><div class="num">4</div>Time</div>
+                    <div class="wstep" data-step="5"><div class="num">5</div>Confirm</div>
+                </div>
+
+                <!-- Step 1 -->
+                <div class="wpanel active" data-panel="1">
+                    <div class="wtitle">Select Your Vehicle</div>
+                    <div class="wsubtitle">Which car are we washing?</div>
+                    <div class="choice-list" id="vehicleList"></div>
+                    <div class="wnav">
+                        <button class="btn btn-primary" id="next1">Continue →</button>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="wpanel" data-panel="2">
+                    <div class="wtitle">Pick a Service</div>
+                    <div class="wsubtitle">Choose the level of shine.</div>
+                    <div class="choice-list" id="serviceList"></div>
+                    <div class="wnav">
+                        <button class="btn btn-ghost" data-back="1">← Back</button>
+                        <button class="btn btn-primary" id="next2">Continue →</button>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="wpanel" data-panel="3">
+                    <div class="wtitle">Pick a Date</div>
+                    <div class="wsubtitle">Up to 30 days in advance.</div>
+                    <div class="form-group">
+                        <label for="slotDate">Select date</label>
+                        <input type="date" id="slotDate" required>
+                    </div>
+                    <div class="wnav">
+                        <button class="btn btn-ghost" data-back="2">← Back</button>
+                        <button class="btn btn-primary" id="next3">Continue →</button>
+                    </div>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="wpanel" data-panel="4">
+                    <div class="wtitle">Pick a Time Slot</div>
+                    <div class="wsubtitle">Slots are every 30 minutes, 8 AM – 8 PM.</div>
+                    <div class="slot-grid" id="slotGrid"></div>
+                    <div class="wnav">
+                        <button class="btn btn-ghost" data-back="3">← Back</button>
+                        <button class="btn btn-primary" id="next4">Continue →</button>
+                    </div>
+                </div>
+
+                <!-- Step 5 -->
+                <div class="wpanel" data-panel="5">
+                    <div class="wtitle">Review & Confirm</div>
+                    <div class="wsubtitle">Double-check your booking.</div>
+
+                    <div style="background:var(--gray-50);border-radius:var(--r-md);padding:1.25rem;margin-bottom:1rem;">
+                        <div style="display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--gray-200);">
+                            <span class="text-muted">Vehicle</span>
+                            <strong id="cVehicle">—</strong>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--gray-200);">
+                            <span class="text-muted">Service</span>
+                            <strong id="cService">—</strong>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--gray-200);">
+                            <span class="text-muted">Date</span>
+                            <strong id="cDate">—</strong>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;padding:.5rem 0;">
+                            <span class="text-muted">Time</span>
+                            <strong id="cTime">—</strong>
+                        </div>
+                    </div>
+
+                    <div class="wnav">
+                        <button class="btn btn-ghost" data-back="4">← Back</button>
+                        <button class="btn btn-primary" id="confirmBtn">Confirm Booking</button>
+                    </div>
+                    <p id="error" class="error-message"></p>
+                </div>
+
+                <!-- Summary Bar (persistent) -->
+                <div class="summary-bar" id="summaryBar" style="display:none;">
+                    <div class="items">
+                        <strong id="sVehicle">—</strong>
+                        <span id="sMeta">Select your options</span>
+                    </div>
+                    <div class="price" id="sPrice">₹0</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer><p>&copy; 2026 AquaShine - STQA Lab Project</p></footer>
+
+    <script src="/js/toast.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script src="/js/sidebar.js"></script>
+    <script src="/js/booking-wizard.js"></script>
+</body>
+</html>

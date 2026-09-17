@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Bookings - AquaShine Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/design-system.css">
+    <style>
+        .table { width:100%; border-collapse:collapse; background:white; border-radius:var(--r-md); overflow:hidden; box-shadow:var(--shadow-sm); }
+        .table th { text-align:left; padding:.85rem 1rem; background:var(--gray-50); font-size:.75rem; font-weight:700; color:var(--gray-500); text-transform:uppercase; letter-spacing:.05em; }
+        .table td { padding:.85rem 1rem; border-top:1px solid var(--gray-100); font-size:.9rem; }
+        .table tr:hover { background:var(--gray-50); }
+        .filter-bar { display:flex; gap:.5rem; margin-bottom:1.25rem; flex-wrap:wrap; }
+        .filter-btn { padding:.5rem 1rem; border:1.5px solid var(--gray-200); background:white; border-radius:999px; cursor:pointer; font-size:.85rem; font-weight:500; transition:all var(--t); }
+        .filter-btn:hover { border-color:var(--blue-500); }
+        .filter-btn.active { background:var(--navy-900); color:white; border-color:var(--navy-900); }
+    </style>
+</head>
+<body>
+    <nav id="navbar"></nav>
+    <div class="app-layout">
+        <aside id="sidebar"></aside>
+        <main class="app-main">
+            <h1 style="font-size:1.85rem;margin-bottom:.35rem;">Manage Bookings</h1>
+            <p class="text-muted" style="margin-bottom:1.5rem;">All bookings across the platform.</p>
+
+            <div class="filter-bar" id="filters">
+                <button class="filter-btn active" data-status="">All</button>
+                <button class="filter-btn" data-status="CONFIRMED">Confirmed</button>
+                <button class="filter-btn" data-status="COMPLETED">Completed</button>
+                <button class="filter-btn" data-status="CANCELLED">Cancelled</button>
+            </div>
+
+            <div id="bookingsTable">
+                <p class="text-muted">Loading…</p>
+            </div>
+        </main>
+    </div>
+    <footer><p>&copy; 2026 AquaShine - Admin Panel</p></footer>
+
+    <script src="/js/toast.js"></script>
+    <script src="/js/navbar.js"></script>
+    <script src="/js/admin-sidebar.js"></script>
+    <script src="/js/admin.js"></script>
+    <script>
+        let currentStatus = '';
+
+        async function loadBookings() {
+            const url = currentStatus ? `/api/admin/bookings?status=${currentStatus}` : '/api/admin/bookings';
+            const res = await fetch(url, { credentials: 'include' });
+            if (!res.ok) { document.getElementById('bookingsTable').innerHTML = '<p class="text-muted">Failed to load.</p>'; return; }
+            const bookings = await res.json();
+
+            if (bookings.length === 0) {
+                document.getElementById('bookingsTable').innerHTML = `
+                    <div class="empty-state" style="max-width:none;">
+                        <div class="empty-state-icon">📋</div>
+                        <h3>No bookings found</h3>
+                        <p>No bookings match this filter.</p>
+                    </div>`;
+                return;
+            }
+
+            document.getElementById('bookingsTable').innerHTML = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>User</th>
+                            <th>Vehicle</th>
+                            <th>Service</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${bookings.map(b => `
+                            <tr data-id="${b.id}">
+                                <td>#${b.id}</td>
+                                <td>${b.userEmail}</td>
+                                <td>${b.vehiclePlate}</td>
+                                <td>${b.serviceName}</td>
+                                <td>${b.slotDate}</td>
+                                <td>${(b.slotTime || '').substring(0,5)}</td>
+                                <td><strong>${inr(b.totalPrice)}</strong></td>
+                                <td>${statusBadge(b.status)}</td>
+                                <td>
+                                    ${b.status === 'CONFIRMED' ? `
+                                        <button class="btn btn-sm btn-ghost" onclick="markComplete(${b.id})">✓ Complete</button>
+                                        <button class="btn btn-sm btn-danger" onclick="cancelBooking(${b.id})">✕ Cancel</button>
+                                    ` : '—'}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        async function markComplete(id) {
+            const res = await fetch(`/api/admin/bookings/${id}/complete`, { method: 'POST', credentials: 'include' });
+            if (res.ok) { showToast('Marked complete', 'success'); loadBookings(); }
+            else { showToast('Failed', 'error'); }
+        }
+
+        async function cancelBooking(id) {
+            if (!confirm('Cancel this booking?')) return;
+            const res = await fetch(`/api/admin/bookings/${id}/cancel`, { method: 'POST', credentials: 'include' });
+            if (res.ok) { showToast('Booking cancelled', 'success'); loadBookings(); }
+            else { showToast('Failed', 'error'); }
+        }
+
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentStatus = btn.dataset.status;
+                loadBookings();
+            });
+        });
+
+        (async function init() {
+            const user = await requireAdmin();
+            if (!user) return;
+            loadBookings();
+        })();
+    </script>
+</body>
+</html>
