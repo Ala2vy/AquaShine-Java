@@ -4,6 +4,7 @@ import com.aquashine.selenium.base.BaseTest;
 import org.junit.jupiter.api.*;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.Select;
 
 import java.util.List;
 
@@ -14,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DisplayName("Member B - Vehicle & Service Selenium Tests")
 class MemberBVehicleSeleniumTests extends BaseTest {
 
-    private String createFreshUser() {
+    private void createFreshUser() {
         String uniqueEmail = "memberB" + System.currentTimeMillis() + "@test.com";
         navigate("/auth/register.html");
         type("email", uniqueEmail);
@@ -23,20 +24,18 @@ class MemberBVehicleSeleniumTests extends BaseTest {
         type("password", "Test@1234");
         click("registerBtn");
         wait.until(d -> d.getCurrentUrl().contains("dashboard"));
-        return uniqueEmail;
     }
 
     @Test
     @DisplayName("B-SE-01: Services page lists 3 wash services")
     void servicesListed() {
-        loginCustomer("abcd@gmail.com", "Pass@123");
+        loginCustomer("abcd@gmail.com", "123456789");
         navigate("/auth/services.html");
 
-        wait.until(d -> d.findElements(By.cssSelector(".service-card, .bento-card")).size() > 0);
+        wait.until(d -> !d.findElements(By.cssSelector(".service-card, .bento-card")).isEmpty());
         List<WebElement> services = driver.findElements(By.cssSelector(".service-card, .bento-card"));
         assertThat(services.size()).isGreaterThanOrEqualTo(3);
 
-        // Should contain Basic / Premium / Deluxe somewhere
         String html = driver.getPageSource();
         assertThat(html).containsIgnoringCase("Basic");
         assertThat(html).containsIgnoringCase("Premium");
@@ -48,7 +47,6 @@ class MemberBVehicleSeleniumTests extends BaseTest {
         createFreshUser();
         navigate("/auth/add-vehicle.html");
 
-        // Form fields present
         assertThat(findById("plateNumber").isDisplayed()).isTrue();
         assertThat(findById("type").isDisplayed()).isTrue();
         assertThat(findById("year").isDisplayed()).isTrue();
@@ -63,9 +61,7 @@ class MemberBVehicleSeleniumTests extends BaseTest {
         String plate = "SEL" + (System.currentTimeMillis() % 10000);
         type("plateNumber", plate);
 
-        // Select type via Select element
-        org.openqa.selenium.support.ui.Select typeSelect =
-            new org.openqa.selenium.support.ui.Select(findById("type"));
+        Select typeSelect = new Select(findById("type"));
         typeSelect.selectByValue("SEDAN");
 
         type("make", "Toyota");
@@ -73,10 +69,7 @@ class MemberBVehicleSeleniumTests extends BaseTest {
         type("year", "2020");
         click("addBtn");
 
-        // Should redirect to vehicles list
         wait.until(d -> d.getCurrentUrl().contains("vehicles"));
-
-        // Vehicle should appear in the grid
         wait.until(d -> d.getPageSource().contains(plate));
         assertThat(driver.getPageSource()).contains(plate);
     }

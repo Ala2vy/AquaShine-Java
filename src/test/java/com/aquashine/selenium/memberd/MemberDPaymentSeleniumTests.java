@@ -14,7 +14,7 @@ class MemberDPaymentSeleniumTests extends BaseTest {
     @Test
     @DisplayName("D-SE-01: Payment page loads with card form")
     void paymentPageLoads() {
-        loginCustomer("abcd@gmail.com", "Pass@123");
+        loginCustomer("abcd@gmail.com", "123456789");
         // Use a known booking ID — must exist in your DB
         navigate("/auth/payment.html?bookingId=8");
 
@@ -27,7 +27,7 @@ class MemberDPaymentSeleniumTests extends BaseTest {
     @Test
     @DisplayName("D-SE-02: Admin dashboard shows KPIs")
     void adminDashboardKPIs() {
-        loginAdmin("abc@gmail.com", "Pass@123");
+        loginAdmin("abc@gmail.com", "12345678");
         navigate("/admin/index.html");
 
         wait.until(d -> d.findElement(By.id("statUsers")).isDisplayed());
@@ -39,7 +39,7 @@ class MemberDPaymentSeleniumTests extends BaseTest {
     @Test
     @DisplayName("D-SE-03: Admin payments page shows transactions")
     void adminPaymentsList() {
-        loginAdmin("abc@gmail.com", "Pass@123");
+        loginAdmin("abc@gmail.com", "12345678");
         navigate("/admin/payments.html");
 
         wait.until(d -> {
@@ -54,7 +54,7 @@ class MemberDPaymentSeleniumTests extends BaseTest {
     @Test
     @DisplayName("D-SE-04: Customer cannot access admin panel")
     void customerBlockedFromAdmin() {
-        loginCustomer("abcd@gmail.com", "Pass@123");
+        loginCustomer("abcd@gmail.com", "123456789");
         navigate("/admin/index.html");
 
         // requireAdmin() should redirect away

@@ -1,9 +1,12 @@
 package com.aquashine.selenium.memberc;
 
 import com.aquashine.selenium.base.BaseTest;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 
 import java.util.List;
 
@@ -17,12 +20,12 @@ class MemberCBookingSeleniumTests extends BaseTest {
     @Test
     @DisplayName("C-SE-01: Booking wizard has 5 steps")
     void wizardStepsPresent() {
-        loginCustomer("abcd@gmail.com", "Pass@123");
+        loginCustomer("abcd@gmail.com", "123456789");
         navigate("/auth/book.html");
 
         wait.until(d -> d.findElements(By.cssSelector(".wstep")).size() == 5);
         List<WebElement> steps = driver.findElements(By.cssSelector(".wstep"));
-        assertThat(steps.size()).isEqualTo(5);
+        assertThat(steps).hasSize(5);
 
         assertThat(steps.get(0).getText()).containsIgnoringCase("vehicle");
         assertThat(steps.get(1).getText()).containsIgnoringCase("service");
@@ -43,16 +46,16 @@ class MemberCBookingSeleniumTests extends BaseTest {
         wait.until(d -> d.getCurrentUrl().contains("dashboard"));
 
         navigate("/auth/book.html");
-        wait.until(d -> d.findElement(By.id("emptyVehicles")).isDisplayed());
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("emptyView")));
 
-        String text = driver.findElement(By.id("emptyVehicles")).getText();
+        String text = driver.findElement(By.id("emptyView")).getText();
         assertThat(text).containsIgnoringCase("add");
     }
 
     @Test
     @DisplayName("C-SE-03: My Bookings page renders")
     void bookingsPageRenders() {
-        loginCustomer("abcd@gmail.com", "Pass@123");
+        loginCustomer("abcd@gmail.com", "123456789");
         navigate("/auth/bookings.html");
 
         wait.until(d -> d.findElement(By.id("bookingList")).isDisplayed());
@@ -62,15 +65,18 @@ class MemberCBookingSeleniumTests extends BaseTest {
     @Test
     @DisplayName("C-SE-04: Clicking a service opens wizard with it preselected")
     void serviceClickPreselects() {
-        loginCustomer("abcd@gmail.com", "Pass@123");
+        loginCustomer("abcd@gmail.com", "123456789");
         navigate("/auth/services.html");
 
-        // Find the first Book This Service button
-        wait.until(d -> d.findElements(By.cssSelector(".service-card, .bento-card")).size() > 0);
-        WebElement firstCard = driver.findElements(By.cssSelector(".service-card, .bento-card")).get(0);
-        firstCard.click();
+        wait.until(d -> !d.findElements(By.cssSelector(".service-card, .bento-card")).isEmpty());
 
-        // Should land on book.html with ?serviceId=
+        List<WebElement> links = driver.findElements(
+                By.cssSelector(".service-card a[href*='book.html'], .bento-card a[href*='book.html']"));
+        assertThat(links).as("service card 'Book This Service' link").isNotEmpty();
+
+        WebElement bookLink = links.get(0);
+        bookLink.click();
+
         wait.until(d -> d.getCurrentUrl().contains("book.html"));
         assertThat(driver.getCurrentUrl()).contains("book.html");
     }

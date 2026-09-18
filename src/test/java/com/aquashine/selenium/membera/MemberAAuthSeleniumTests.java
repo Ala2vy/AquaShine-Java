@@ -45,10 +45,7 @@ class MemberAAuthSeleniumTests extends BaseTest {
     void wrongRoleTab() {
         navigate("/auth/login.html");
 
-        // USER tab is selected by default, but click it anyway to be explicit.
         driver.findElement(By.cssSelector("[data-role='USER']")).click();
-
-        // Use the ADMIN account credentials while the USER role is selected.
         type("email", "abc@gmail.com");
         type("password", "12345678");
         click("loginBtn");
@@ -62,12 +59,10 @@ class MemberAAuthSeleniumTests extends BaseTest {
             return err.isDisplayed() && err.getText().toLowerCase().contains("admin");
         });
 
-        // Must NOT have navigated to an admin page.
         assertThat(driver.getCurrentUrl())
                 .doesNotContain("/admin/")
                 .doesNotContain("dashboard");
 
-        // Assert the app's actual wrong-role message.
         assertThat(driver.findElement(By.id("error")).getText())
                 .containsIgnoringCase("admin");
     }
