@@ -53,12 +53,13 @@ class MemberAAuthSeleniumTests extends BaseTest {
         type("password", "12345678");
         click("loginBtn");
 
-        // The app should reject this: URL must stay on login.html,
-        // and the #error element must be visible.
+        // Wait until #error is visible AND contains the app's actual message.
+        // App shows: "This account is an admin. Switch to the Admin tab."
         wait.until(d -> {
             List<WebElement> errs = d.findElements(By.id("error"));
             if (errs.isEmpty()) return false;
-            return errs.get(0).isDisplayed();
+            WebElement err = errs.get(0);
+            return err.isDisplayed() && err.getText().toLowerCase().contains("admin");
         });
 
         // Must NOT have navigated to an admin page.
@@ -66,9 +67,9 @@ class MemberAAuthSeleniumTests extends BaseTest {
                 .doesNotContain("/admin/")
                 .doesNotContain("dashboard");
 
-        // The error message the app actually shows.
+        // Assert the app's actual wrong-role message.
         assertThat(driver.findElement(By.id("error")).getText())
-                .containsIgnoringCase("invalid");
+                .containsIgnoringCase("admin");
     }
 
     @Test
@@ -85,23 +86,5 @@ class MemberAAuthSeleniumTests extends BaseTest {
 
         wait.until(d -> d.getCurrentUrl().contains("dashboard"));
         assertThat(driver.getCurrentUrl()).contains("dashboard.html");
-    }
-
-    @Test
-    @DisplayName("DEBUG: what the login page looks like after submit")
-    void debugLogin() {
-        navigate("/auth/login.html");
-        driver.findElement(By.cssSelector("[data-role='USER']")).click();
-        type("email", "abcd@gmail.com");
-        type("password", "Pass@123");
-        click("loginBtn");
-
-        try { Thread.sleep(3000); } catch (InterruptedException ignored) {}
-
-        System.out.println("=== DEBUG ===");
-        System.out.println("URL after login: " + driver.getCurrentUrl());
-        System.out.println("Page source:");
-        System.out.println(driver.getPageSource());
-        System.out.println("=== END ===");
     }
 }
