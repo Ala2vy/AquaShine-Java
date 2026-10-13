@@ -7,196 +7,231 @@ import org.openqa.selenium.By;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * BVA — Member A: Account & Login boundaries.
+ * BVA — Member A: Account boundaries.
+ *
+ * Bounds (from AuthService / ProfileService):
+ *   register password:      8–20
+ *   register phone:        10–13 digits
+ *   change-password new:    8–20
+ *   edit-profile fullName:  3–50
+ *   edit-profile phone:    10–13 digits
  *
  * 5 modules x 3 boundary values = 15 tests.
- * Each test performs a real action (register / login / change password /
- * edit profile) and asserts the resulting user-visible behaviour.
+ * Each test targets a specific boundary and asserts accept/reject.
+ *
+ * NOTE: change-password and edit-profile tests use a fresh user per test
+ * (not the shared abcd@gmail.com) so they can't corrupt state for later tests.
  */
 @Tag("Selenium") @Tag("MemberA") @Tag("BVA")
 @DisplayName("Member A - Auth BVA Tests")
 class MemberAAuthBvaTests extends BaseTest {
 
-    private String email() { return "bva" + System.nanoTime() + "@test.com"; }
+    private String uniqueEmail() { return "bva" + System.nanoTime() + "@test.com"; }
+    private String rep(String s, int n) { return s.repeat(n); }
 
-    private void register(String em, String name, String phone, String pwd) {
+    /** Register a brand-new user with valid data and land on dashboard. */
+    private void registerFresh(String email) {
         navigate("/auth/register.html");
-        type("email", em);
-        type("fullName", name);
+        type("email", email);
+        type("fullName", "BVA User");
+        type("phone", "9876543210");
+        type("password", "Test@1234");
+        click("registerBtn");
+        wait.until(d -> d.getCurrentUrl().contains("dashboard"));
+    }
+
+    /** Fill register form and submit (used for register BVA tests). */
+    private void register(String email, String phone, String pwd) {
+        navigate("/auth/register.html");
+        type("email", email);
+        type("fullName", "BVA User");
         type("phone", phone);
         type("password", pwd);
         click("registerBtn");
     }
 
-    private void login(String role, String em, String pwd) {
-        navigate("/auth/login.html");
-        driver.findElement(By.cssSelector("[data-role='" + role + "']")).click();
-        type("email", em);
-        type("password", pwd);
-        click("loginBtn");
-    }
+    // -----------------------------------------------------------------
+    // M1 — register password: range 8–20
+    // -----------------------------------------------------------------
 
-    // --- M1 register ---
-
-    /** Password 7 chars (below minimum 8) -> registration rejected. */
     @Test
-    @DisplayName("A-BVA-01 (register): password of 7 chars rejected (below minimum)")
-    void registerPassword7() {
-        register(email(), "BVA User", "9876543210", "Test@12");
+    @DisplayName("A-BVA-01 (register password): 7 chars rejected (min-1)")
+    void registerPasswordMinMinus1() {
+        register(uniqueEmail(), "9876543210", rep("a", 7));
         assertThat(driver.getCurrentUrl()).doesNotContain("dashboard");
     }
 
-    /** Password 8 chars (minimum) -> registration accepted. */
     @Test
-    @DisplayName("A-BVA-02 (register): password of 8 chars accepted (minimum)")
-    void registerPassword8() {
-        register(email(), "BVA User", "9876543210", "Test@123");
+    @DisplayName("A-BVA-02 (register password): 8 chars accepted (min)")
+    void registerPasswordMin() {
+        register(uniqueEmail(), "9876543210", rep("a", 8));
         wait.until(d -> d.getCurrentUrl().contains("dashboard"));
     }
 
-    /** Phone 9 digits (below minimum 10) -> registration rejected. */
     @Test
-    @DisplayName("A-BVA-03 (register): phone of 9 digits rejected (below minimum)")
-    void registerPhone9() {
-        register(email(), "BVA User", "987654321", "Test@1234");
+    @DisplayName("A-BVA-03 (register password): 21 chars rejected (max+1)")
+    void registerPasswordMaxPlus1() {
+        register(uniqueEmail(), "9876543210", rep("a", 21));
         assertThat(driver.getCurrentUrl()).doesNotContain("dashboard");
     }
 
-    // --- M2 customerLogin ---
+    // -----------------------------------------------------------------
+    // M2 — register phone: range 10–13 digits
+    // -----------------------------------------------------------------
 
-    /** Correct customer credentials -> reaches customer dashboard. */
     @Test
-    @DisplayName("A-BVA-04 (customerLogin): correct credentials reach dashboard")
-    void customerLoginOk() {
-        login("USER", "abcd@gmail.com", "123456789");
-        wait.until(d -> d.getCurrentUrl().contains("dashboard.html"));
-    }
-
-    /** Empty password (below minimum) -> login rejected. */
-    @Test
-    @DisplayName("A-BVA-05 (customerLogin): empty password rejected (below minimum)")
-    void customerLoginEmptyPwd() {
-        login("USER", "abcd@gmail.com", "");
+    @DisplayName("A-BVA-04 (register phone): 9 digits rejected (min-1)")
+    void registerPhoneMinMinus1() {
+        register(uniqueEmail(), rep("9", 9), "Test@1234");
         assertThat(driver.getCurrentUrl()).doesNotContain("dashboard");
     }
 
-    /** Wrong password -> login rejected, error shown. */
     @Test
-    @DisplayName("A-BVA-06 (customerLogin): wrong password rejected")
-    void customerLoginWrongPwd() {
-        login("USER", "abcd@gmail.com", "wrong123");
-        wait.until(d -> d.findElement(By.id("error")).isDisplayed());
+    @DisplayName("A-BVA-05 (register phone): 10 digits accepted (min)")
+    void registerPhoneMin() {
+        register(uniqueEmail(), rep("9", 10), "Test@1234");
+        wait.until(d -> d.getCurrentUrl().contains("dashboard"));
+    }
+
+    @Test
+    @DisplayName("A-BVA-06 (register phone): 14 digits rejected (max+1)")
+    void registerPhoneMaxPlus1() {
+        register(uniqueEmail(), rep("9", 14), "Test@1234");
         assertThat(driver.getCurrentUrl()).doesNotContain("dashboard");
     }
 
-    // --- M3 adminLogin ---
+    // -----------------------------------------------------------------
+    // M3 — change-password newPassword: range 8–20
+    // Each test uses a dedicated fresh user to avoid state corruption.
+    // -----------------------------------------------------------------
 
-    /** Correct admin credentials -> reaches admin portal. */
-    @Test
-    @DisplayName("A-BVA-07 (adminLogin): correct credentials reach admin portal")
-    void adminLoginOk() {
-        login("ADMIN", "abc@gmail.com", "12345678");
-        wait.until(d -> d.getCurrentUrl().contains("/admin/"));
-    }
-
-    /** Wrong admin password -> login rejected. */
-    @Test
-    @DisplayName("A-BVA-08 (adminLogin): wrong password rejected")
-    void adminLoginWrongPwd() {
-        login("ADMIN", "abc@gmail.com", "wrong123");
-        assertThat(driver.getCurrentUrl()).doesNotContain("/admin/");
-    }
-
-    /** Empty admin password -> login rejected. */
-    @Test
-    @DisplayName("A-BVA-09 (adminLogin): empty password rejected")
-    void adminLoginEmptyPwd() {
-        login("ADMIN", "abc@gmail.com", "");
-        assertThat(driver.getCurrentUrl()).doesNotContain("/admin/");
-    }
-
-    // --- M4 changePassword ---
-
-    private void openChangePassword() {
-        loginCustomer("abcd@gmail.com", "123456789");
+    private void openChangePasswordFor(String email, String password) {
+        loginCustomer(email, password);
         navigate("/auth/change-password.html");
     }
 
-    /** New password 7 chars (below minimum) -> change rejected. */
-    @Test
-    @DisplayName("A-BVA-10 (changePassword): 7-char new password rejected (below minimum)")
-    void changePwd7() {
-        openChangePassword();
-        if (driver.findElements(By.id("currentPassword")).isEmpty()) return;
-        type("currentPassword", "123456789");
-        type("newPassword", "Test@12");
-        if (!driver.findElements(By.id("confirmPassword")).isEmpty())
-            type("confirmPassword", "Test@12");
-        if (!driver.findElements(By.id("changeBtn")).isEmpty())
-            driver.findElement(By.id("changeBtn")).click();
-        assertThat(driver.getCurrentUrl()).contains("change-password");
+    private void submitChangePassword(String oldPwd, String newPwd) {
+        type("oldPassword", oldPwd);
+        type("newPassword", newPwd);
+        driver.findElement(By.cssSelector("#changePasswordForm button[type='submit']")).click();
     }
 
-    /** New password 8 chars (minimum) -> change accepted. */
     @Test
-    @DisplayName("A-BVA-11 (changePassword): 8-char new password accepted (minimum)")
-    void changePwd8() {
-        openChangePassword();
-        assertThat(driver.getCurrentUrl()).contains("change-password.html");
+    @DisplayName("A-BVA-07 (changePassword new): 7 chars rejected (min-1)")
+    void changePasswordMinMinus1() {
+        String email = uniqueEmail();
+        registerFresh(email);
+        openChangePasswordFor(email, "Test@1234");
+        submitChangePassword("Test@1234", rep("a", 7));
+        // Rejected -> stays on change-password page
+        wait.until(d -> d.getCurrentUrl().contains("change-password"));
     }
 
-    /** Change password with wrong current password -> rejected. */
     @Test
-    @DisplayName("A-BVA-12 (changePassword): wrong current password rejected")
-    void changePwdWrongCurrent() {
-        openChangePassword();
-        if (driver.findElements(By.id("currentPassword")).isEmpty()) return;
-        type("currentPassword", "totally-wrong");
-        type("newPassword", "NewPass@1234");
-        if (!driver.findElements(By.id("confirmPassword")).isEmpty())
-            type("confirmPassword", "NewPass@1234");
-        if (!driver.findElements(By.id("changeBtn")).isEmpty())
-            driver.findElement(By.id("changeBtn")).click();
-        try { Thread.sleep(500); } catch (InterruptedException ignored) {}
-        assertThat(driver.getCurrentUrl()).contains("change-password");
+    @DisplayName("A-BVA-08 (changePassword new): 8 chars accepted (min)")
+    void changePasswordMin() {
+        String email = uniqueEmail();
+        registerFresh(email);
+        openChangePasswordFor(email, "Test@1234");
+        submitChangePassword("Test@1234", "NewPass1");
+        // Accepted -> either redirected away OR no error message shown.
+        try { Thread.sleep(1200); } catch (InterruptedException ignored) {}
+        boolean redirected = !driver.getCurrentUrl().contains("change-password");
+        boolean noError = driver.findElements(By.id("error")).isEmpty()
+                || driver.findElement(By.id("error")).getText().isBlank();
+        assertThat(redirected || noError).isTrue();
     }
 
-    // --- M5 editProfile ---
+    @Test
+    @DisplayName("A-BVA-09 (changePassword new): 21 chars rejected (max+1)")
+    void changePasswordMaxPlus1() {
+        String email = uniqueEmail();
+        registerFresh(email);
+        openChangePasswordFor(email, "Test@1234");
+        submitChangePassword("Test@1234", rep("a", 21));
+        wait.until(d -> d.getCurrentUrl().contains("change-password"));
+    }
 
-    private void openProfile() {
-        loginCustomer("abcd@gmail.com", "123456789");
+    // -----------------------------------------------------------------
+    // M4 — edit-profile fullName: range 3–50
+    // -----------------------------------------------------------------
+
+    private void openProfileFor(String email, String password) {
+        loginCustomer(email, password);
         navigate("/auth/profile.html");
     }
 
-    /** FullName 1 char (below minimum 2) -> save rejected. */
-    @Test
-    @DisplayName("A-BVA-13 (editProfile): 1-char full name rejected (below minimum)")
-    void profileName1() {
-        openProfile();
-        if (driver.findElements(By.id("fullName")).isEmpty()) return;
-        type("fullName", "A");
-        if (!driver.findElements(By.id("saveBtn")).isEmpty())
-            driver.findElement(By.id("saveBtn")).click();
-        try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+    private void submitProfile(String name, String phone) {
+        type("fullName", name);
+        type("phone", phone);
+        click("saveBtn");
     }
 
-    /** FullName 2 chars (minimum) -> save accepted. */
     @Test
-    @DisplayName("A-BVA-14 (editProfile): 2-char full name accepted (minimum)")
-    void profileName2() {
-        openProfile();
-        if (driver.findElements(By.id("fullName")).isEmpty()) return;
-        type("fullName", "AB");
-        if (!driver.findElements(By.id("saveBtn")).isEmpty())
-            driver.findElement(By.id("saveBtn")).click();
-        try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+    @DisplayName("A-BVA-10 (editProfile fullName): 2 chars rejected (min-1)")
+    void profileNameMinMinus1() {
+        String email = uniqueEmail();
+        registerFresh(email);
+        openProfileFor(email, "Test@1234");
+        submitProfile(rep("A", 2), "9876543210");
+        assertThat(driver.getCurrentUrl()).contains("profile");
     }
 
-    /** Profile page loads with existing user data. */
     @Test
-    @DisplayName("A-BVA-15 (editProfile): profile page loads for logged-in customer")
-    void profileLoads() {
-        openProfile();
-        assertThat(driver.getCurrentUrl()).contains("profile.html");
+    @DisplayName("A-BVA-11 (editProfile fullName): 3 chars accepted (min)")
+    void profileNameMin() {
+        String email = uniqueEmail();
+        registerFresh(email);
+        openProfileFor(email, "Test@1234");
+        submitProfile(rep("A", 3), "9876543210");
+        try { Thread.sleep(800); } catch (InterruptedException ignored) {}
+        assertThat(driver.findElements(By.id("editError")).isEmpty()
+                || driver.findElement(By.id("editError")).getText().isBlank()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A-BVA-12 (editProfile fullName): 51 chars rejected (max+1)")
+    void profileNameMaxPlus1() {
+        String email = uniqueEmail();
+        registerFresh(email);
+        openProfileFor(email, "Test@1234");
+        submitProfile(rep("A", 51), "9876543210");
+        assertThat(driver.getCurrentUrl()).contains("profile");
+    }
+
+    // -----------------------------------------------------------------
+    // M5 — edit-profile phone: range 10–13 digits
+    // -----------------------------------------------------------------
+
+    @Test
+    @DisplayName("A-BVA-13 (editProfile phone): 9 digits rejected (min-1)")
+    void profilePhoneMinMinus1() {
+        String email = uniqueEmail();
+        registerFresh(email);
+        openProfileFor(email, "Test@1234");
+        submitProfile("Valid Name", rep("9", 9));
+        assertThat(driver.getCurrentUrl()).contains("profile");
+    }
+
+    @Test
+    @DisplayName("A-BVA-14 (editProfile phone): 10 digits accepted (min)")
+    void profilePhoneMin() {
+        String email = uniqueEmail();
+        registerFresh(email);
+        openProfileFor(email, "Test@1234");
+        submitProfile("Valid Name", rep("9", 10));
+        try { Thread.sleep(800); } catch (InterruptedException ignored) {}
+        assertThat(driver.findElements(By.id("editError")).isEmpty()
+                || driver.findElement(By.id("editError")).getText().isBlank()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A-BVA-15 (editProfile phone): 14 digits rejected (max+1)")
+    void profilePhoneMaxPlus1() {
+        String email = uniqueEmail();
+        registerFresh(email);
+        openProfileFor(email, "Test@1234");
+        submitProfile("Valid Name", rep("9", 14));
+        assertThat(driver.getCurrentUrl()).contains("profile");
     }
 }

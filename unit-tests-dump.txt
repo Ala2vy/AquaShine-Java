@@ -1,0 +1,1723 @@
+================================================================================
+UNIT TESTS DUMP
+Total files: 24
+Generated: 2026-10-13 09:02:06
+================================================================================
+
+--- FILE LIST ---
+  src\test\java\com\aquashine\unit\membera\ChangePasswordBasisPathTests.java
+  src\test\java\com\aquashine\unit\membera\EditProfileBasisPathTests.java
+  src\test\java\com\aquashine\unit\membera\LoginBasisPathTests.java
+  src\test\java\com\aquashine\unit\membera\LoginDecisionTableTests.java
+  src\test\java\com\aquashine\unit\membera\ProfileBvaTests.java
+  src\test\java\com\aquashine\unit\membera\RegisterBvaTests.java
+  src\test\java\com\aquashine\unit\memberb\AddVehicleBasisPathTests.java
+  src\test\java\com\aquashine\unit\memberb\DeleteVehicleBasisPathTests.java
+  src\test\java\com\aquashine\unit\memberb\EditVehicleBasisPathTests.java
+  src\test\java\com\aquashine\unit\memberb\PricingDecisionTableTests.java
+  src\test\java\com\aquashine\unit\memberb\ServiceBvaTests.java
+  src\test\java\com\aquashine\unit\memberb\ServiceCatalogueBasisPathTests.java
+  src\test\java\com\aquashine\unit\memberb\VehicleBvaTests.java
+  src\test\java\com\aquashine\unit\memberc\BookingBvaTests.java
+  src\test\java\com\aquashine\unit\memberc\BookingDecisionTableTests.java
+  src\test\java\com\aquashine\unit\memberc\CancelBookingBasisPathTests.java
+  src\test\java\com\aquashine\unit\memberc\CancellationEquivalenceTests.java
+  src\test\java\com\aquashine\unit\memberc\CreateBookingBasisPathTests.java
+  src\test\java\com\aquashine\unit\memberc\RefundPreviewBvaTests.java
+  src\test\java\com\aquashine\unit\memberc\SlotValidationBasisPathTests.java
+  src\test\java\com\aquashine\unit\memberd\PaymentBasisPathTests.java
+  src\test\java\com\aquashine\unit\memberd\PaymentBvaTests.java
+  src\test\java\com\aquashine\unit\memberd\PaymentDecisionTableTests.java
+  src\test\java\com\aquashine\unit\memberd\PromoEquivalenceTests.java
+
+================================================================================
+FILE: src\test\java\com\aquashine\unit\membera\ChangePasswordBasisPathTests.java
+================================================================================
+package com.aquashine.unit.membera;
+
+import com.aquashine.model.User;
+import com.aquashine.repository.UserRepository;
+import com.aquashine.service.ProfileService;
+import org.junit.jupiter.api.*;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@Tag("BasisPath")
+@DisplayName("Member A - ChangePassword Basis Path (V(G)=5)")
+class ChangePasswordBasisPathTests {
+
+    private ProfileService serviceWithUser() {
+        UserRepository repo = mock(UserRepository.class);
+        BCryptPasswordEncoder enc = new BCryptPasswordEncoder();
+        User u = new User("test@aquashine.com", enc.encode("Pass@123"), "Test User", "1234567890");
+        u.setId(1L);
+
+        when(repo.findById(1L)).thenReturn(Optional.of(u));
+        when(repo.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        return new ProfileService(repo);
+    }
+
+    @Test @DisplayName("P1: short new password -> throws")
+    void p1_short_new_password() {
+        ProfileService svc = serviceWithUser();
+        assertThatThrownBy(() -> svc.changePassword(1L, "Pass@123", "Abc@1"))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("P2: new == old -> throws")
+    void p2_same_as_old() {
+        ProfileService svc = serviceWithUser();
+        assertThatThrownBy(() -> svc.changePassword(1L, "Pass@123", "Pass@123"))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("P3: wrong old password -> returns false")
+    void p3_wrong_old() {
+        ProfileService svc = serviceWithUser();
+        assertThat(svc.changePassword(1L, "WrongOld1", "NewPass1")).isFalse();
+    }
+
+    @Test @DisplayName("P4: valid change -> returns true")
+    void p4_valid_change() {
+        ProfileService svc = serviceWithUser();
+        assertThat(svc.changePassword(1L, "Pass@123", "NewPass1")).isTrue();
+    }
+
+    @Test @DisplayName("P5: unknown user -> returns false")
+    void p5_unknown_user() {
+        UserRepository repo = mock(UserRepository.class);
+        when(repo.findById(99L)).thenReturn(Optional.empty());
+        ProfileService svc = new ProfileService(repo);
+        assertThat(svc.changePassword(99L, "Pass@123", "NewPass1")).isFalse();
+    }
+}
+
+================================================================================
+FILE: src\test\java\com\aquashine\unit\membera\EditProfileBasisPathTests.java
+================================================================================
+package com.aquashine.unit.membera;
+
+import com.aquashine.model.User;
+import com.aquashine.repository.UserRepository;
+import com.aquashine.service.ProfileService;
+import org.junit.jupiter.api.*;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@Tag("BasisPath")
+@DisplayName("Member A - EditProfile Basis Path (V(G)=5)")
+class EditProfileBasisPathTests {
+
+    private ProfileService serviceWithUser() {
+        UserRepository repo = mock(UserRepository.class);
+        BCryptPasswordEncoder enc = new BCryptPasswordEncoder();
+        User u = new User("test@aquashine.com", enc.encode("Pass@123"), "Old Name", "1234567890");
+        u.setId(1L);
+
+        when(repo.findById(1L)).thenReturn(Optional.of(u));
+        when(repo.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        return new ProfileService(repo);
+    }
+
+    @Test @DisplayName("P1: empty name -> throws")
+    void p1_empty_name() {
+        ProfileService svc = serviceWithUser();
+        assertThatThrownBy(() -> svc.updateProfile(1L, "", "1234567890"))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("P2: short name (2 chars) -> throws")
+    void p2_short_name() {
+        ProfileService svc = serviceWithUser();
+        assertThatThrownBy(() -> svc.updateProfile(1L, "AB", "1234567890"))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("P3: long name (51 chars) -> throws")
+    void p3_long_name() {
+        ProfileService svc = serviceWithUser();
+        String longName = "A".repeat(51);
+        assertThatThrownBy(() -> svc.updateProfile(1L, longName, "1234567890"))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("P4: bad phone (9 digits) -> throws")
+    void p4_bad_phone() {
+        ProfileService svc = serviceWithUser();
+        assertThatThrownBy(() -> svc.updateProfile(1L, "Valid Name", "123456789"))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("P5: valid update -> succeeds")
+    void p5_valid_update() {
+        ProfileService svc = serviceWithUser();
+        User updated = svc.updateProfile(1L, "New Name", "9876543210");
+        assertThat(updated).isNotNull();
+        assertThat(updated.getFullName()).isEqualTo("New Name");
+        assertThat(updated.getPhone()).isEqualTo("9876543210");
+    }
+}
+
+================================================================================
+FILE: src\test\java\com\aquashine\unit\membera\LoginBasisPathTests.java
+================================================================================
+package com.aquashine.unit.membera;
+
+import com.aquashine.model.User;
+import com.aquashine.repository.UserRepository;
+import com.aquashine.service.AuthService;
+import org.junit.jupiter.api.*;
+
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@Tag("BasisPath")
+@DisplayName("Member A - Login Basis Path (V(G)=5)")
+class LoginBasisPathTests {
+
+    private AuthService seededService() {
+        UserRepository repo = mock(UserRepository.class);
+        final User[] stored = new User[1];
+
+        when(repo.save(any(User.class))).thenAnswer(inv -> {
+            User u = inv.getArgument(0);
+            u.setId(1L);
+            stored[0] = u;
+            return u;
+        });
+        when(repo.existsByEmail(anyString())).thenAnswer(inv -> {
+            String email = inv.getArgument(0);
+            return stored[0] != null && stored[0].getEmail().equals(email);
+        });
+        when(repo.findByEmail(anyString())).thenAnswer(inv -> {
+            String email = inv.getArgument(0);
+            if (stored[0] != null && stored[0].getEmail().equals(email)) {
+                return Optional.of(stored[0]);
+            }
+            return Optional.empty();
+        });
+
+        AuthService svc = new AuthService(repo);
+        svc.register("test@aquashine.com", "Pass@123", "Test User", "1234567890");
+        return svc;
+    }
+
+    @Test @DisplayName("P1: empty inputs -> return null")
+    void p1_empty_inputs() {
+        assertThat(seededService().login("", "")).isNull();
+    }
+
+    @Test @DisplayName("P2: unknown user -> return null")
+    void p2_unknown_user() {
+        assertThat(seededService().login("unknown@test.com", "Pass@123")).isNull();
+    }
+
+    @Test @DisplayName("P3: wrong password -> return null")
+    void p3_wrong_password() {
+        assertThat(seededService().login("test@aquashine.com", "WrongPass1")).isNull();
+    }
+
+    @Test @DisplayName("P4: valid credentials -> return user")
+    void p4_valid_credentials() {
+        User u = seededService().login("test@aquashine.com", "Pass@123");
+        assertThat(u).isNotNull();
+        assertThat(u.getEmail()).isEqualTo("test@aquashine.com");
+    }
+
+    @Test @DisplayName("P5: whitespace around email -> still succeeds")
+    void p5_whitespace_email() {
+        assertThat(seededService().login("  test@aquashine.com  ", "Pass@123")).isNotNull();
+    }
+}
+
+================================================================================
+FILE: src\test\java\com\aquashine\unit\membera\LoginDecisionTableTests.java
+================================================================================
+package com.aquashine.unit.membera;
+
+import com.aquashine.model.User;
+import com.aquashine.repository.UserRepository;
+import com.aquashine.service.AuthService;
+import org.junit.jupiter.api.*;
+
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@Tag("DecisionTable")
+@DisplayName("Member A - Login Decision Table")
+class LoginDecisionTableTests {
+
+    private AuthService seededService() {
+        UserRepository repo = mock(UserRepository.class);
+        // Fake in-memory store
+        final User[] stored = new User[1];
+
+        when(repo.save(any(User.class))).thenAnswer(inv -> {
+            User u = inv.getArgument(0);
+            u.setId(1L);
+            stored[0] = u;
+            return u;
+        });
+        when(repo.existsByEmail(anyString())).thenAnswer(inv -> {
+            String email = inv.getArgument(0);
+            return stored[0] != null && stored[0].getEmail().equals(email);
+        });
+        when(repo.findByEmail(anyString())).thenAnswer(inv -> {
+            String email = inv.getArgument(0);
+            if (stored[0] != null && stored[0].getEmail().equals(email)) {
+                return Optional.of(stored[0]);
+            }
+            return Optional.empty();
+        });
+
+        AuthService svc = new AuthService(repo);
+        svc.register("test@aquashine.com", "Pass@123", "Test User", "1234567890");
+        return svc;
+    }
+
+    @Test @DisplayName("R1: Valid email + valid password + exists -> success")
+    void r1_valid_valid_exists() {
+        assertThat(seededService().login("test@aquashine.com", "Pass@123")).isNotNull();
+    }
+
+    @Test @DisplayName("R2: Valid email + wrong password -> fail")
+    void r2_valid_wrong() {
+        assertThat(seededService().login("test@aquashine.com", "WrongPass1")).isNull();
+    }
+
+    @Test @DisplayName("R3: Valid email + valid password + no user -> fail")
+    void r3_valid_valid_nouser() {
+        assertThat(seededService().login("ghost@aquashine.com", "Pass@123")).isNull();
+    }
+
+    @Test @DisplayName("R4: Empty email -> fail")
+    void r4_empty_email() {
+        assertThat(seededService().login("", "Pass@123")).isNull();
+    }
+
+    @Test @DisplayName("R5: Empty password -> fail")
+    void r5_empty_password() {
+        assertThat(seededService().login("test@aquashine.com", "")).isNull();
+    }
+
+    @Test @DisplayName("R6: Uppercase email -> still succeeds")
+    void r6_uppercase_email() {
+        assertThat(seededService().login("TEST@AQUASHINE.COM", "Pass@123")).isNotNull();
+    }
+}
+
+================================================================================
+FILE: src\test\java\com\aquashine\unit\membera\ProfileBvaTests.java
+================================================================================
+package com.aquashine.unit.membera;
+
+import com.aquashine.model.User;
+import com.aquashine.repository.UserRepository;
+import com.aquashine.service.ProfileService;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@Tag("BVA")
+@DisplayName("Member A - Profile BVA Tests")
+class ProfileBvaTests {
+
+    private ProfileService serviceWithUser() {
+        UserRepository repo = mock(UserRepository.class);
+        BCryptPasswordEncoder enc = new BCryptPasswordEncoder();
+        User u = new User("test@aquashine.com", enc.encode("Pass@123"), "Test User", "1234567890");
+        u.setId(1L);
+
+        when(repo.findById(1L)).thenReturn(Optional.of(u));
+        when(repo.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        return new ProfileService(repo);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "AB,false",
+        "ABC,true",
+        "ABCD,true",
+        "ABCDE,true"
+    })
+    @DisplayName("BVA: name length boundaries")
+    void nameLength_Boundary(String name, boolean shouldSucceed) {
+        ProfileService svc = serviceWithUser();
+        if (shouldSucceed) {
+            assertThatCode(() -> svc.updateProfile(1L, name, "1234567890"))
+                .doesNotThrowAnyException();
+        } else {
+            assertThatThrownBy(() -> svc.updateProfile(1L, name, "1234567890"))
+                .isInstanceOf(IllegalArgumentException.class);
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "123456789,false",
+        "1234567890,true",
+        "1234567890123,true",
+        "12345678901234,false"
+    })
+    @DisplayName("BVA: phone digits boundaries")
+    void phoneDigits_Boundary(String phone, boolean shouldSucceed) {
+        ProfileService svc = serviceWithUser();
+        if (shouldSucceed) {
+            assertThatCode(() -> svc.updateProfile(1L, "Valid Name", phone))
+                .doesNotThrowAnyException();
+        } else {
+            assertThatThrownBy(() -> svc.updateProfile(1L, "Valid Name", phone))
+                .isInstanceOf(IllegalArgumentException.class);
+        }
+    }
+}
+
+================================================================================
+FILE: src\test\java\com\aquashine\unit\membera\RegisterBvaTests.java
+================================================================================
+package com.aquashine.unit.membera;
+
+import com.aquashine.model.User;
+import com.aquashine.repository.UserRepository;
+import com.aquashine.service.AuthService;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+
+@Tag("BVA")
+@DisplayName("Member A - Register BVA Tests")
+class RegisterBvaTests {
+
+    private AuthService newService() {
+        UserRepository repo = mock(UserRepository.class);
+        when(repo.existsByEmail(anyString())).thenReturn(false);
+        when(repo.save(any(User.class))).thenAnswer(inv -> {
+            User u = inv.getArgument(0);
+            u.setId(1L);
+            return u;
+        });
+        return new AuthService(repo);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "Abc@123,false",
+        "Abcd@123,true",
+        "Abcde@123,true",
+        "Abcdefghijklmnopq@12,true",
+        "Abcdefghijklmnopqr@123,false"
+    })
+    @DisplayName("BVA: password length 8-20")
+    void passwordLength_Boundary(String password, boolean shouldSucceed) {
+        AuthService svc = newService();
+        String email = "u" + System.nanoTime() + "@test.com";
+        if (shouldSucceed) {
+            assertThatCode(() -> svc.register(email, password, "Test User", "1234567890"))
+                .doesNotThrowAnyException();
+        } else {
+            assertThatThrownBy(() -> svc.register(email, password, "Test User", "1234567890"))
+                .isInstanceOf(IllegalArgumentException.class);
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "123456789,false",
+        "1234567890,true",
+        "12345678901,true",
+        "123456789012,true",
+        "1234567890123,true",
+        "12345678901234,false"
+    })
+    @DisplayName("BVA: phone digits 10-13")
+    void phoneDigits_Boundary(String phone, boolean shouldSucceed) {
+        AuthService svc = newService();
+        String email = "u" + System.nanoTime() + "@test.com";
+        if (shouldSucceed) {
+            assertThatCode(() -> svc.register(email, "Pass@123", "Test User", phone))
+                .doesNotThrowAnyException();
+        } else {
+            assertThatThrownBy(() -> svc.register(email, "Pass@123", "Test User", phone))
+                .isInstanceOf(IllegalArgumentException.class);
+        }
+    }
+}
+
+================================================================================
+FILE: src\test\java\com\aquashine\unit\memberb\AddVehicleBasisPathTests.java
+================================================================================
+package com.aquashine.unit.memberb;
+
+import com.aquashine.model.Vehicle;
+import com.aquashine.repository.VehicleRepository;
+import com.aquashine.service.VehicleService;
+import org.junit.jupiter.api.*;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+@Tag("BasisPath")
+@DisplayName("Member B - AddVehicle Basis Path (V(G)=5)")
+class AddVehicleBasisPathTests {
+
+    private VehicleService serviceAllowing() {
+        VehicleRepository repo = mock(VehicleRepository.class);
+        when(repo.countByUserId(1L)).thenReturn(0L);
+        when(repo.existsByUserIdAndPlateNumber(eq(1L), anyString())).thenReturn(false);
+        when(repo.save(any(Vehicle.class))).thenAnswer(inv -> {
+            Vehicle v = inv.getArgument(0);
+            v.setId(1L);
+            return v;
+        });
+        return new VehicleService(repo);
+    }
+
+    @Test
+    @DisplayName("P1: empty plate -> throws")
+    void p1_empty_plate() {
+        assertThatThrownBy(() -> serviceAllowing().addVehicle(1L, "", "SEDAN", "Toyota", "Camry", 2020))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("P2: short plate (<3) -> throws")
+    void p2_short_plate() {
+        assertThatThrownBy(() -> serviceAllowing().addVehicle(1L, "AB", "SEDAN", "Toyota", "Camry", 2020))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("P3: invalid type -> throws")
+    void p3_invalid_type() {
+        assertThatThrownBy(() -> serviceAllowing().addVehicle(1L, "ABC123", "TRUCK", "Tata", "X", 2020))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("P4: invalid year (1899) -> throws")
+    void p4_invalid_year() {
+        assertThatThrownBy(() -> serviceAllowing().addVehicle(1L, "ABC123", "SEDAN", "Toyota", "Camry", 1899))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("P5: valid vehicle -> saved")
+    void p5_valid() {
+        Vehicle v = serviceAllowing().addVehicle(1L, "ABC123", "SEDAN", "Toyota", "Camry", 2020);
+        assertThat(v).isNotNull();
+        assertThat(v.getPlateNumber()).isEqualTo("ABC123");
+    }
+}
+
+================================================================================
+FILE: src\test\java\com\aquashine\unit\memberb\DeleteVehicleBasisPathTests.java
+================================================================================
+package com.aquashine.unit.memberb;
+
+import com.aquashine.model.Vehicle;
+import com.aquashine.repository.VehicleRepository;
+import com.aquashine.service.VehicleService;
+import org.junit.jupiter.api.*;
+
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+@Tag("BasisPath")
+@DisplayName("Member B - DeleteVehicle Basis Path (V(G)=4)")
+class DeleteVehicleBasisPathTests {
+
+    @Test @DisplayName("P1: vehicle not found -> false")
+    void p1_not_found() {
+        VehicleRepository repo = mock(VehicleRepository.class);
+        when(repo.findById(99L)).thenReturn(Optional.empty());
+        assertThat(new VehicleService(repo).deleteVehicle(1L, 99L)).isFalse();
+    }
+
+    @Test @DisplayName("P2: wrong owner -> throws")
+    void p2_wrong_owner() {
+        VehicleRepository repo = mock(VehicleRepository.class);
+        Vehicle v = new Vehicle(1L, "ABC123", "SEDAN", "", "", 2020);
+        v.setId(1L);
+        when(repo.findById(1L)).thenReturn(Optional.of(v));
+        assertThatThrownBy(() -> new VehicleService(repo).deleteVehicle(2L, 1L))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("P3: correct owner -> deleted")
+    void p3_correct_owner() {
+        VehicleRepository repo = mock(VehicleRepository.class);
+        Vehicle v = new Vehicle(1L, "ABC123", "SEDAN", "", "", 2020);
+        v.setId(1L);
+        when(repo.findById(1L)).thenReturn(Optional.of(v));
+        assertThat(new VehicleService(repo).deleteVehicle(1L, 1L)).isTrue();
+        verify(repo, times(1)).delete(v);
+    }
+
+    @Test @DisplayName("P4: user with no vehicles -> not found")
+    void p4_empty() {
+        VehicleRepository repo = mock(VehicleRepository.class);
+        when(repo.findById(1L)).thenReturn(Optional.empty());
+        assertThat(new VehicleService(repo).deleteVehicle(99L, 1L)).isFalse();
+    }
+}
+
+================================================================================
+FILE: src\test\java\com\aquashine\unit\memberb\EditVehicleBasisPathTests.java
+================================================================================
+package com.aquashine.unit.memberb;
+
+import com.aquashine.model.Vehicle;
+import com.aquashine.repository.VehicleRepository;
+import com.aquashine.service.VehicleService;
+import org.junit.jupiter.api.*;
+
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@Tag("BasisPath")
+@DisplayName("Member B - EditVehicle Basis Path (V(G)=5)")
+class EditVehicleBasisPathTests {
+
+    private VehicleService serviceWithVehicle(Long userId) {
+        VehicleRepository repo = mock(VehicleRepository.class);
+        Vehicle v = new Vehicle(userId, "ABC123", "SEDAN", "Toyota", "Camry", 2020);
+        v.setId(1L);
+        when(repo.findById(1L)).thenReturn(Optional.of(v));
+        when(repo.save(any(Vehicle.class))).thenAnswer(inv -> inv.getArgument(0));
+        return new VehicleService(repo);
+    }
+
+    @Test @DisplayName("P1: invalid type -> throws")
+    void p1_invalid_type() {
+        assertThatThrownBy(() -> serviceWithVehicle(1L).editVehicle(1L, 1L, "TRUCK", "X", "Y", 2020))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("P2: invalid year -> throws")
+    void p2_invalid_year() {
+        assertThatThrownBy(() -> serviceWithVehicle(1L).editVehicle(1L, 1L, "SEDAN", "X", "Y", 1800))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("P3: vehicle not found -> empty")
+    void p3_not_found() {
+        VehicleRepository repo = mock(VehicleRepository.class);
+        when(repo.findById(99L)).thenReturn(Optional.empty());
+        VehicleService svc = new VehicleService(repo);
+        assertThat(svc.editVehicle(1L, 99L, "SEDAN", "X", "Y", 2020)).isEmpty();
+    }
+
+    @Test @DisplayName("P4: wrong owner -> throws")
+    void p4_wrong_owner() {
+        VehicleService svc = serviceWithVehicle(1L); // owned by user 1
+        assertThatThrownBy(() -> svc.editVehicle(2L, 1L, "SEDAN", "X", "Y", 2020))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("P5: valid edit -> updated")
+    void p5_valid_edit() {
+        VehicleService svc = serviceWithVehicle(1L);
+        Optional<Vehicle> updated = svc.editVehicle(1L, 1L, "SUV", "Honda", "CRV", 2022);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().getType()).isEqualTo("SUV");
+    }
+}
+
+================================================================================
+FILE: src\test\java\com\aquashine\unit\memberb\PricingDecisionTableTests.java
+================================================================================
+package com.aquashine.unit.memberb;
+
+import com.aquashine.model.WashService;
+import com.aquashine.repository.WashServiceRepository;
+import com.aquashine.service.ServiceCatalogueService;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+@Tag("DecisionTable")
+@DisplayName("Member B - Pricing Decision Table")
+class PricingDecisionTableTests {
+
+    private ServiceCatalogueService serviceWithBase(int basePrice) {
+        WashServiceRepository repo = mock(WashServiceRepository.class);
+        WashService svc = new WashService("X", "Test", "BASIC", basePrice);
+        svc.setId(1L);
+        when(repo.findById(1L)).thenReturn(Optional.of(svc));
+        return new ServiceCatalogueService(repo);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "HATCHBACK,500,500",
+        "SEDAN,500,750",
+        "SUV,500,1000",
+        "HATCHBACK,1000,1000",
+        "SEDAN,1000,1500",
+        "SUV,1000,2000",
+        "HATCHBACK,2000,2000",
+        "SUV,2000,4000"
+    })
+    @DisplayName("DT: price = base * multiplier(vehicleType)")
+    void priceMatrix(String vehicleType, int basePrice, int expected) {
+        ServiceCatalogueService svc = serviceWithBase(basePrice);
+        int actual = svc.calculatePrice(1L, vehicleType);
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test @DisplayName("DT: invalid vehicle type -> throws")
+    void invalidVehicleType() {
+        ServiceCatalogueService svc = serviceWithBase(500);
+        assertThatThrownBy(() -> svc.calculatePrice(1L, "TRUCK"))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+}
+
+================================================================================
+FILE: src\test\java\com\aquashine\unit\memberb\ServiceBvaTests.java
+================================================================================
+package com.aquashine.unit.memberb;
+
+import com.aquashine.model.WashService;
+import com.aquashine.repository.WashServiceRepository;
+import com.aquashine.service.ServiceCatalogueService;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+
+@Tag("BVA")
+@DisplayName("Member B - Service BVA Tests")
+class ServiceBvaTests {
+
+    private ServiceCatalogueService service() {
+        WashServiceRepository repo = mock(WashServiceRepository.class);
+        when(repo.findByCode(anyString())).thenReturn(Optional.empty());
+        when(repo.save(any(WashService.class))).thenAnswer(inv -> inv.getArgument(0));
+        return new ServiceCatalogueService(repo);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "50,false",
+        "99,false",
+        "100,true",
+        "101,true",
+        "5000,true",
+        "9999,true",
+        "10000,true",
+        "10001,false"
+    })
+    @DisplayName("BVA: price range 100-10000")
+    void priceRange_Boundary(int price, boolean shouldSucceed) {
+        ServiceCatalogueService svc = service();
+        if (shouldSucceed) {
+            assertThatCode(() -> svc.createService("TEST" + price, "Test", "BASIC", price))
+                .doesNotThrowAnyException();
+        } else {
+            assertThatThrownBy(() -> svc.createService("TEST" + price, "Test", "BASIC", price))
+                .isInstanceOf(IllegalArgumentException.class);
+        }
+    }
+}
+
+================================================================================
+FILE: src\test\java\com\aquashine\unit\memberb\ServiceCatalogueBasisPathTests.java
+================================================================================
+package com.aquashine.unit.memberb;
+
+import com.aquashine.model.WashService;
+import com.aquashine.repository.WashServiceRepository;
+import com.aquashine.service.ServiceCatalogueService;
+import org.junit.jupiter.api.*;
+
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+
+@Tag("BasisPath")
+@DisplayName("Member B - ServiceCatalogue Basis Path (V(G)=5)")
+class ServiceCatalogueBasisPathTests {
+
+    private ServiceCatalogueService service() {
+        WashServiceRepository repo = mock(WashServiceRepository.class);
+        when(repo.findByCode(anyString())).thenReturn(Optional.empty());
+        when(repo.save(any(WashService.class))).thenAnswer(inv -> {
+            WashService s = inv.getArgument(0);
+            s.setId(1L);
+            return s;
+        });
+        return new ServiceCatalogueService(repo);
+    }
+
+    @Test @DisplayName("P1: empty code -> throws")
+    void p1_empty_code() {
+        assertThatThrownBy(() -> service().createService("", "Basic", "BASIC", 500))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("P2: empty name -> throws")
+    void p2_empty_name() {
+        assertThatThrownBy(() -> service().createService("BASIC", "", "BASIC", 500))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("P3: invalid category -> throws")
+    void p3_invalid_category() {
+        assertThatThrownBy(() -> service().createService("BASIC", "Basic", "SUPER", 500))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("P4: duplicate code -> throws")
+    void p4_duplicate_code() {
+        WashServiceRepository repo = mock(WashServiceRepository.class);
+        WashService existing = new WashService("BASIC", "Basic", "BASIC", 500);
+        when(repo.findByCode("BASIC")).thenReturn(Optional.of(existing));
+        ServiceCatalogueService svc = new ServiceCatalogueService(repo);
+
+        assertThatThrownBy(() -> svc.createService("BASIC", "Basic2", "BASIC", 500))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("P5: valid create -> saved")
+    void p5_valid() {
+        WashService s = service().createService("DELUXE", "Deluxe Wash", "DELUXE", 2000);
+        assertThat(s).isNotNull();
+        assertThat(s.getCode()).isEqualTo("DELUXE");
+    }
+}
+
+================================================================================
+FILE: src\test\java\com\aquashine\unit\memberb\VehicleBvaTests.java
+================================================================================
+package com.aquashine.unit.memberb;
+
+import com.aquashine.model.Vehicle;
+import com.aquashine.repository.VehicleRepository;
+import com.aquashine.service.VehicleService;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+
+import java.time.Year;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+@Tag("BVA")
+@DisplayName("Member B - Vehicle BVA Tests")
+class VehicleBvaTests {
+
+    private VehicleService serviceWithCount(long existing) {
+        VehicleRepository repo = mock(VehicleRepository.class);
+        when(repo.countByUserId(1L)).thenReturn(existing);
+        when(repo.existsByUserIdAndPlateNumber(eq(1L), anyString())).thenReturn(false);
+        when(repo.save(any(Vehicle.class))).thenAnswer(inv -> inv.getArgument(0));
+        return new VehicleService(repo);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "AB,false",
+        "ABC,true",
+        "ABCD,true",
+        "ABCDEFGHIJKLMNO,true",
+        "ABCDEFGHIJKLMNOP,false"
+    })
+    @DisplayName("BVA: plate number length 3-15")
+    void plateLength_Boundary(String plate, boolean shouldSucceed) {
+        VehicleService svc = serviceWithCount(0);
+        if (shouldSucceed) {
+            assertThatCode(() -> svc.addVehicle(1L, plate, "SEDAN", "Toyota", "Camry", 2020))
+                .doesNotThrowAnyException();
+        } else {
+            assertThatThrownBy(() -> svc.addVehicle(1L, plate, "SEDAN", "Toyota", "Camry", 2020))
+                .isInstanceOf(IllegalArgumentException.class);
+        }
+    }
+
+    @Test
+    @DisplayName("BVA: valid year range (1900 to current_year+1)")
+    void year_validRange() {
+        int currentYear = Year.now().getValue();
+        int maxYear = currentYear + 1;
+
+        VehicleService svc = serviceWithCount(0);
+
+        // 1900 = min boundary
+        assertThatCode(() -> svc.addVehicle(1L, "ABC123", "SEDAN", "", "", 1900))
+            .doesNotThrowAnyException();
+
+        // 1899 = below min
+        assertThatThrownBy(() -> svc.addVehicle(1L, "ABC124", "SEDAN", "", "", 1899))
+            .isInstanceOf(IllegalArgumentException.class);
+
+        // current year = valid
+        assertThatCode(() -> svc.addVehicle(1L, "ABC125", "SEDAN", "", "", currentYear))
+            .doesNotThrowAnyException();
+
+        // current + 1 = max boundary = valid
+        assertThatCode(() -> svc.addVehicle(1L, "ABC126", "SEDAN", "", "", maxYear))
+            .doesNotThrowAnyException();
+
+        // current + 2 = above max = reject
+        assertThatThrownBy(() -> svc.addVehicle(1L, "ABC127", "SEDAN", "", "", maxYear + 1))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("BVA: 5 vehicles already -> 6th rejected")
+    void maxVehicles() {
+        VehicleService svc = serviceWithCount(5);
+        assertThatThrownBy(() -> svc.addVehicle(1L, "ABC123", "SEDAN", "", "", 2020))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("BVA: 4 vehicles already -> 5th accepted")
+    void underMaxVehicles() {
+        VehicleService svc = serviceWithCount(4);
+        assertThatCode(() -> svc.addVehicle(1L, "ABC123", "SEDAN", "", "", 2020))
+            .doesNotThrowAnyException();
+    }
+}
+
+================================================================================
+FILE: src\test\java\com\aquashine\unit\memberc\BookingBvaTests.java
+================================================================================
+package com.aquashine.unit.memberc;
+
+import com.aquashine.model.Vehicle;
+import com.aquashine.model.WashService;
+import com.aquashine.repository.BookingRepository;
+import com.aquashine.repository.VehicleRepository;
+import com.aquashine.repository.WashServiceRepository;
+import com.aquashine.service.BookingService;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@Tag("BVA")
+@DisplayName("Member C - Booking BVA")
+class BookingBvaTests {
+
+    private BookingService service() {
+        VehicleRepository vRepo = mock(VehicleRepository.class);
+        WashServiceRepository sRepo = mock(WashServiceRepository.class);
+        BookingRepository bRepo = mock(BookingRepository.class);
+        Vehicle v = new Vehicle(1L, "ABC123", "HATCHBACK", "", "", 2020);
+        v.setId(1L);
+        WashService s = new WashService("BASIC", "Basic", "BASIC", 500);
+        s.setId(1L);
+        when(vRepo.findById(1L)).thenReturn(Optional.of(v));
+        when(sRepo.findById(1L)).thenReturn(Optional.of(s));
+        when(bRepo.existsBySlotDateAndSlotTimeAndStatus(any(), any(), any())).thenReturn(false);
+        when(bRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        return new BookingService(bRepo, vRepo, sRepo);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1, 15, 29, 30})
+    @DisplayName("BVA: days ahead 0-30 accepted")
+    void daysAhead_Valid(int daysAhead) {
+        assertThatCode(() -> service().createBooking(1L, 1L, 1L, LocalDate.now().plusDays(daysAhead), LocalTime.of(10, 0)))
+            .doesNotThrowAnyException();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {31, 40, 100})
+    @DisplayName("BVA: days ahead > 30 rejected")
+    void daysAhead_TooFar(int daysAhead) {
+        assertThatThrownBy(() -> service().createBooking(1L, 1L, 1L, LocalDate.now().plusDays(daysAhead), LocalTime.of(10, 0)))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {8, 12, 19})
+    @DisplayName("BVA: hours 8, 12, 19 valid (0 min)")
+    void hourBoundary_Valid(int hour) {
+        assertThatCode(() -> service().createBooking(1L, 1L, 1L, LocalDate.now().plusDays(1), LocalTime.of(hour, 0)))
+            .doesNotThrowAnyException();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 5, 7, 20, 22, 23})
+    @DisplayName("BVA: hours outside 8-20 rejected")
+    void hourBoundary_Invalid(int hour) {
+        assertThatThrownBy(() -> service().createBooking(1L, 1L, 1L, LocalDate.now().plusDays(1), LocalTime.of(hour, 0)))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+}
+
+================================================================================
+FILE: src\test\java\com\aquashine\unit\memberc\BookingDecisionTableTests.java
+================================================================================
+package com.aquashine.unit.memberc;
+
+import com.aquashine.model.Vehicle;
+import com.aquashine.model.WashService;
+import com.aquashine.repository.BookingRepository;
+import com.aquashine.repository.VehicleRepository;
+import com.aquashine.repository.WashServiceRepository;
+import com.aquashine.service.BookingService;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@Tag("DecisionTable")
+@DisplayName("Member C - Booking Price Decision Table")
+class BookingDecisionTableTests {
+
+    private BookingService serviceForVehicleType(String vehicleType, int basePrice) {
+        VehicleRepository vRepo = mock(VehicleRepository.class);
+        WashServiceRepository sRepo = mock(WashServiceRepository.class);
+        BookingRepository bRepo = mock(BookingRepository.class);
+        Vehicle v = new Vehicle(1L, "ABC123", vehicleType, "", "", 2020);
+        v.setId(1L);
+        WashService s = new WashService("X", "X", "BASIC", basePrice);
+        s.setId(1L);
+        when(vRepo.findById(1L)).thenReturn(Optional.of(v));
+        when(sRepo.findById(1L)).thenReturn(Optional.of(s));
+        when(bRepo.existsBySlotDateAndSlotTimeAndStatus(any(), any(), any())).thenReturn(false);
+        when(bRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        return new BookingService(bRepo, vRepo, sRepo);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "HATCHBACK,500,500",
+        "SEDAN,500,750",
+        "SUV,500,1000",
+        "HATCHBACK,1000,1000",
+        "SEDAN,1000,1500",
+        "SUV,1000,2000"
+    })
+    @DisplayName("DT: total = base * multiplier(vehicleType)")
+    void priceMatrix(String vehicleType, int basePrice, int expected) {
+        BookingService svc = serviceForVehicleType(vehicleType, basePrice);
+        var booking = svc.createBooking(1L, 1L, 1L, LocalDate.now().plusDays(1), LocalTime.of(10, 0));
+        assertThat(booking.getTotalPrice()).isEqualTo(expected);
+    }
+}
+
+================================================================================
+FILE: src\test\java\com\aquashine\unit\memberc\CancelBookingBasisPathTests.java
+================================================================================
+package com.aquashine.unit.memberc;
+
+import com.aquashine.model.Booking;
+import com.aquashine.repository.BookingRepository;
+import com.aquashine.service.CancellationService;
+import org.junit.jupiter.api.*;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@Tag("BasisPath")
+@DisplayName("Member C - Cancel Booking Basis Path (V(G)=5)")
+class CancelBookingBasisPathTests {
+
+    private CancellationService serviceWith(Booking booking) {
+        BookingRepository repo = mock(BookingRepository.class);
+        when(repo.findById(1L)).thenReturn(Optional.ofNullable(booking));
+        when(repo.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
+        return new CancellationService(repo);
+    }
+
+    private Booking makeBooking(Long userId, LocalDate date, LocalTime time, String status) {
+        Booking b = new Booking(userId, 1L, 1L, date, time, 500);
+        b.setId(1L);
+        b.setStatus(status);
+        return b;
+    }
+
+    @Test @DisplayName("P1: booking not found -> throws")
+    void p1_not_found() {
+        CancellationService svc = serviceWith(null);
+        assertThatThrownBy(() -> svc.cancel(1L, 1L, "test"))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("P2: wrong owner -> throws")
+    void p2_wrong_owner() {
+        Booking b = makeBooking(2L, LocalDate.now().plusDays(2), LocalTime.of(10, 0), "CONFIRMED");
+        CancellationService svc = serviceWith(b);
+        assertThatThrownBy(() -> svc.cancel(1L, 1L, "test"))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("P3: not CONFIRMED -> throws")
+    void p3_not_confirmed() {
+        Booking b = makeBooking(1L, LocalDate.now().plusDays(2), LocalTime.of(10, 0), "CANCELLED");
+        CancellationService svc = serviceWith(b);
+        assertThatThrownBy(() -> svc.cancel(1L, 1L, "test"))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("P4: past booking -> throws")
+    void p4_past_booking() {
+        Booking b = makeBooking(1L, LocalDate.now().minusDays(1), LocalTime.of(10, 0), "CONFIRMED");
+        CancellationService svc = serviceWith(b);
+        assertThatThrownBy(() -> svc.cancel(1L, 1L, "test"))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("P5: valid cancel -> status changes")
+    void p5_valid_cancel() {
+        Booking b = makeBooking(1L, LocalDate.now().plusDays(2), LocalTime.of(10, 0), "CONFIRMED");
+        CancellationService svc = serviceWith(b);
+        Booking result = svc.cancel(1L, 1L, "changed mind");
+        assertThat(result.getStatus()).isEqualTo("CANCELLED");
+    }
+}
+
+================================================================================
+FILE: src\test\java\com\aquashine\unit\memberc\CancellationEquivalenceTests.java
+================================================================================
+package com.aquashine.unit.memberc;
+
+import com.aquashine.model.Booking;
+import com.aquashine.repository.BookingRepository;
+import com.aquashine.service.CancellationService;
+import org.junit.jupiter.api.*;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@Tag("ECT")
+@DisplayName("Member C - Cancellation Equivalence Classes")
+class CancellationEquivalenceTests {
+
+    private CancellationService serviceWith(Booking b) {
+        BookingRepository repo = mock(BookingRepository.class);
+        when(repo.findById(1L)).thenReturn(Optional.ofNullable(b));
+        when(repo.save(any(Booking.class))).thenAnswer(inv -> inv.getArgument(0));
+        return new CancellationService(repo);
+    }
+
+    private Booking makeBooking(String status) {
+        Booking b = new Booking(1L, 1L, 1L, LocalDate.now().plusDays(2), LocalTime.of(10, 0), 500);
+        b.setId(1L);
+        b.setStatus(status);
+        return b;
+    }
+
+    @Test @DisplayName("ECT-1: status=CONFIRMED -> cancellable")
+    void ect1_confirmed() {
+        Booking b = makeBooking("CONFIRMED");
+        assertThatCode(() -> serviceWith(b).cancel(1L, 1L, "test")).doesNotThrowAnyException();
+    }
+
+    @Test @DisplayName("ECT-2: status=CANCELLED -> not cancellable")
+    void ect2_cancelled() {
+        Booking b = makeBooking("CANCELLED");
+        assertThatThrownBy(() -> serviceWith(b).cancel(1L, 1L, "test"))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("ECT-3: status=COMPLETED -> not cancellable")
+    void ect3_completed() {
+        Booking b = makeBooking("COMPLETED");
+        assertThatThrownBy(() -> serviceWith(b).cancel(1L, 1L, "test"))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("ECT-4: status=PENDING -> not cancellable")
+    void ect4_pending() {
+        Booking b = makeBooking("PENDING");
+        assertThatThrownBy(() -> serviceWith(b).cancel(1L, 1L, "test"))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("ECT-5: empty status -> not cancellable")
+    void ect5_empty() {
+        Booking b = makeBooking("");
+        assertThatThrownBy(() -> serviceWith(b).cancel(1L, 1L, "test"))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+}
+
+================================================================================
+FILE: src\test\java\com\aquashine\unit\memberc\CreateBookingBasisPathTests.java
+================================================================================
+package com.aquashine.unit.memberc;
+
+import com.aquashine.model.Booking;
+import com.aquashine.model.Vehicle;
+import com.aquashine.model.WashService;
+import com.aquashine.repository.BookingRepository;
+import com.aquashine.repository.VehicleRepository;
+import com.aquashine.repository.WashServiceRepository;
+import com.aquashine.service.BookingService;
+import org.junit.jupiter.api.*;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@Tag("BasisPath")
+@DisplayName("Member C - CreateBooking Basis Path (V(G)=5)")
+class CreateBookingBasisPathTests {
+
+    private BookingService service() {
+        VehicleRepository vRepo = mock(VehicleRepository.class);
+        WashServiceRepository sRepo = mock(WashServiceRepository.class);
+        BookingRepository bRepo = mock(BookingRepository.class);
+
+        Vehicle v = new Vehicle(1L, "ABC123", "SEDAN", "Toyota", "Camry", 2020);
+        v.setId(1L);
+        WashService s = new WashService("BASIC", "Basic", "BASIC", 500);
+        s.setId(1L);
+
+        when(vRepo.findById(1L)).thenReturn(Optional.of(v));
+        when(sRepo.findById(1L)).thenReturn(Optional.of(s));
+        when(bRepo.existsBySlotDateAndSlotTimeAndStatus(any(), any(), any())).thenReturn(false);
+        when(bRepo.save(any(Booking.class))).thenAnswer(inv -> {
+            Booking b = inv.getArgument(0);
+            b.setId(1L);
+            return b;
+        });
+
+        return new BookingService(bRepo, vRepo, sRepo);
+    }
+
+    @Test @DisplayName("P1: unknown vehicle -> throws")
+    void p1_unknown_vehicle() {
+        VehicleRepository vRepo = mock(VehicleRepository.class);
+        when(vRepo.findById(99L)).thenReturn(Optional.empty());
+        BookingService svc = new BookingService(mock(BookingRepository.class), vRepo, mock(WashServiceRepository.class));
+        assertThatThrownBy(() -> svc.createBooking(1L, 99L, 1L, LocalDate.now().plusDays(1), LocalTime.of(10, 0)))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("P2: past date -> throws")
+    void p2_past_date() {
+        BookingService svc = service();
+        assertThatThrownBy(() -> svc.createBooking(1L, 1L, 1L, LocalDate.now().minusDays(1), LocalTime.of(10, 0)))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("P3: invalid time (early morning) -> throws")
+    void p3_invalid_time() {
+        BookingService svc = service();
+        assertThatThrownBy(() -> svc.createBooking(1L, 1L, 1L, LocalDate.now().plusDays(1), LocalTime.of(6, 0)))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("P4: slot already taken -> throws")
+    void p4_slot_taken() {
+        VehicleRepository vRepo = mock(VehicleRepository.class);
+        WashServiceRepository sRepo = mock(WashServiceRepository.class);
+        BookingRepository bRepo = mock(BookingRepository.class);
+
+        Vehicle v = new Vehicle(1L, "ABC123", "SEDAN", "", "", 2020);
+        v.setId(1L);
+        WashService s = new WashService("BASIC", "Basic", "BASIC", 500);
+        s.setId(1L);
+
+        when(vRepo.findById(1L)).thenReturn(Optional.of(v));
+        when(sRepo.findById(1L)).thenReturn(Optional.of(s));
+        when(bRepo.existsBySlotDateAndSlotTimeAndStatus(any(), any(), eq("CONFIRMED"))).thenReturn(true);
+
+        BookingService svc = new BookingService(bRepo, vRepo, sRepo);
+        assertThatThrownBy(() -> svc.createBooking(1L, 1L, 1L, LocalDate.now().plusDays(1), LocalTime.of(10, 0)))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("P5: valid booking -> saved")
+    void p5_valid() {
+        BookingService svc = service();
+        Booking b = svc.createBooking(1L, 1L, 1L, LocalDate.now().plusDays(1), LocalTime.of(10, 0));
+        assertThat(b).isNotNull();
+        assertThat(b.getUserId()).isEqualTo(1L);
+    }
+}
+
+================================================================================
+FILE: src\test\java\com\aquashine\unit\memberc\RefundPreviewBvaTests.java
+================================================================================
+package com.aquashine.unit.memberc;
+
+import com.aquashine.repository.BookingRepository;
+import com.aquashine.service.CancellationService;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+
+import java.time.LocalDateTime;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+@Tag("BVA")
+@DisplayName("Member C - Refund BVA")
+class RefundPreviewBvaTests {
+
+    private CancellationService service() {
+        return new CancellationService(mock(BookingRepository.class));
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "0,0",
+        "1,25",
+        "3,25",
+        "4,50",
+        "11,50",
+        "12,75",
+        "23,75",
+        "24,100",
+        "48,100",
+        "72,100"
+    })
+    @DisplayName("BVA: hours before slot -> refund percent")
+    void refundPercent_Boundary(long hoursBefore, int expected) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime slot = now.plusHours(hoursBefore);
+        int actual = service().calculateRefundPercent(slot, now);
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test @DisplayName("Past booking -> throws")
+    void past_booking() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime past = now.minusHours(1);
+        assertThatThrownBy(() -> service().calculateRefundPercent(past, now))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+}
+
+================================================================================
+FILE: src\test\java\com\aquashine\unit\memberc\SlotValidationBasisPathTests.java
+================================================================================
+package com.aquashine.unit.memberc;
+
+import com.aquashine.model.Vehicle;
+import com.aquashine.model.WashService;
+import com.aquashine.repository.BookingRepository;
+import com.aquashine.repository.VehicleRepository;
+import com.aquashine.repository.WashServiceRepository;
+import com.aquashine.service.BookingService;
+import org.junit.jupiter.api.*;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+@Tag("BasisPath")
+@DisplayName("Member C - Slot Validation Basis Path")
+class SlotValidationBasisPathTests {
+
+    private BookingService service() {
+        VehicleRepository vRepo = mock(VehicleRepository.class);
+        WashServiceRepository sRepo = mock(WashServiceRepository.class);
+        BookingRepository bRepo = mock(BookingRepository.class);
+        Vehicle v = new Vehicle(1L, "ABC123", "SEDAN", "", "", 2020);
+        v.setId(1L);
+        WashService s = new WashService("BASIC", "Basic", "BASIC", 500);
+        s.setId(1L);
+        when(vRepo.findById(1L)).thenReturn(Optional.of(v));
+        when(sRepo.findById(1L)).thenReturn(Optional.of(s));
+        when(bRepo.existsBySlotDateAndSlotTimeAndStatus(any(), any(), any())).thenReturn(false);
+        when(bRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        return new BookingService(bRepo, vRepo, sRepo);
+    }
+
+    @Test @DisplayName("P1: 6:00 AM (too early) -> throws")
+    void p1_too_early() {
+        assertThatThrownBy(() -> service().createBooking(1L, 1L, 1L, LocalDate.now().plusDays(1), LocalTime.of(6, 0)))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("P2: 8:00 AM (min boundary) -> valid")
+    void p2_min_boundary() {
+        assertThatCode(() -> service().createBooking(1L, 1L, 1L, LocalDate.now().plusDays(1), LocalTime.of(8, 0)))
+            .doesNotThrowAnyException();
+    }
+
+    @Test @DisplayName("P3: 19:30 (last slot) -> valid")
+    void p3_last_slot() {
+        assertThatCode(() -> service().createBooking(1L, 1L, 1L, LocalDate.now().plusDays(1), LocalTime.of(19, 30)))
+            .doesNotThrowAnyException();
+    }
+
+    @Test @DisplayName("P4: 20:00 (too late) -> throws")
+    void p4_too_late() {
+        assertThatThrownBy(() -> service().createBooking(1L, 1L, 1L, LocalDate.now().plusDays(1), LocalTime.of(20, 0)))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("P5: 15 min granularity -> throws")
+    void p5_bad_granularity() {
+        assertThatThrownBy(() -> service().createBooking(1L, 1L, 1L, LocalDate.now().plusDays(1), LocalTime.of(10, 15)))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+}
+
+================================================================================
+FILE: src\test\java\com\aquashine\unit\memberd\PaymentBasisPathTests.java
+================================================================================
+package com.aquashine.unit.memberd;
+
+import com.aquashine.model.Booking;
+import com.aquashine.model.Payment;
+import com.aquashine.model.Promo;
+import com.aquashine.repository.BookingRepository;
+import com.aquashine.repository.PaymentRepository;
+import com.aquashine.repository.PromoRepository;
+import com.aquashine.service.PaymentService;
+import com.aquashine.service.PromoService;
+import org.junit.jupiter.api.*;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@Tag("BasisPath")
+@DisplayName("Member D - Payment Basis Path (V(G)=5)")
+class PaymentBasisPathTests {
+
+    private PaymentService serviceWithBooking(Booking b, boolean alreadyPaid) {
+        BookingRepository bRepo = mock(BookingRepository.class);
+        PaymentRepository pRepo = mock(PaymentRepository.class);
+        PromoRepository promoRepo = mock(PromoRepository.class);
+        when(bRepo.findById(1L)).thenReturn(Optional.ofNullable(b));
+        when(pRepo.findByBookingId(1L)).thenReturn(alreadyPaid ? Optional.of(new Payment()) : Optional.empty());
+        when(pRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        return new PaymentService(pRepo, bRepo, new PromoService(promoRepo));
+    }
+
+    private Booking makeBooking(Long userId, String status, int price) {
+        Booking b = new Booking(userId, 1L, 1L, LocalDate.now().plusDays(2), LocalTime.of(10, 0), price);
+        b.setId(1L);
+        b.setStatus(status);
+        return b;
+    }
+
+    @Test @DisplayName("P1: booking not found -> throws")
+    void p1_not_found() {
+        PaymentService svc = serviceWithBooking(null, false);
+        assertThatThrownBy(() -> svc.processPayment(1L, 1L, null, "4111111111111111"))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("P2: wrong owner -> throws")
+    void p2_wrong_owner() {
+        Booking b = makeBooking(2L, "CONFIRMED", 1000);
+        PaymentService svc = serviceWithBooking(b, false);
+        assertThatThrownBy(() -> svc.processPayment(1L, 1L, null, "4111111111111111"))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("P3: not CONFIRMED -> throws")
+    void p3_not_confirmed() {
+        Booking b = makeBooking(1L, "CANCELLED", 1000);
+        PaymentService svc = serviceWithBooking(b, false);
+        assertThatThrownBy(() -> svc.processPayment(1L, 1L, null, "4111111111111111"))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("P4: already paid -> throws")
+    void p4_already_paid() {
+        Booking b = makeBooking(1L, "CONFIRMED", 1000);
+        PaymentService svc = serviceWithBooking(b, true);
+        assertThatThrownBy(() -> svc.processPayment(1L, 1L, null, "4111111111111111"))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("P5: valid -> payment saved")
+    void p5_valid() {
+        Booking b = makeBooking(1L, "CONFIRMED", 1000);
+        PaymentService svc = serviceWithBooking(b, false);
+        Payment p = svc.processPayment(1L, 1L, null, "4111111111111111");
+        assertThat(p).isNotNull();
+        assertThat(p.getFinalAmount()).isEqualTo(1000);
+        assertThat(p.getStatus()).isEqualTo("SUCCESS");
+    }
+}
+
+================================================================================
+FILE: src\test\java\com\aquashine\unit\memberd\PaymentBvaTests.java
+================================================================================
+package com.aquashine.unit.memberd;
+
+import com.aquashine.model.Booking;
+import com.aquashine.model.Promo;
+import com.aquashine.repository.BookingRepository;
+import com.aquashine.repository.PaymentRepository;
+import com.aquashine.repository.PromoRepository;
+import com.aquashine.service.PaymentService;
+import com.aquashine.service.PromoService;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@Tag("BVA")
+@DisplayName("Member D - Payment BVA")
+class PaymentBvaTests {
+
+    private PaymentService service() {
+        BookingRepository bRepo = mock(BookingRepository.class);
+        PaymentRepository pRepo = mock(PaymentRepository.class);
+        PromoRepository promoRepo = mock(PromoRepository.class);
+        PromoService promoService = new PromoService(promoRepo);
+
+        Booking b = new Booking(1L, 1L, 1L, LocalDate.now().plusDays(2), LocalTime.of(10, 0), 1000);
+        b.setId(1L);
+        when(bRepo.findById(1L)).thenReturn(Optional.of(b));
+        when(pRepo.findByBookingId(1L)).thenReturn(Optional.empty());
+        when(pRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        return new PaymentService(pRepo, bRepo, promoService);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"4111111111111111", "1234567890123456", "9999999999999999"})
+    @DisplayName("BVA: 16-digit cards accepted")
+    void card_Valid(String card) {
+        assertThatCode(() -> service().processPayment(1L, 1L, null, card))
+            .doesNotThrowAnyException();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"411111111111111", "41111111111111111", "123", ""})
+    @DisplayName("BVA: non-16-digit cards rejected")
+    void card_Invalid(String card) {
+        assertThatThrownBy(() -> service().processPayment(1L, 1L, null, card))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("BVA: 16 digits with spaces accepted")
+    void card_WithSpaces() {
+        assertThatCode(() -> service().processPayment(1L, 1L, null, "4111 1111 1111 1111"))
+            .doesNotThrowAnyException();
+    }
+
+    @Test @DisplayName("BVA: null card rejected")
+    void card_Null() {
+        assertThatThrownBy(() -> service().processPayment(1L, 1L, null, null))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+}
+
+================================================================================
+FILE: src\test\java\com\aquashine\unit\memberd\PaymentDecisionTableTests.java
+================================================================================
+package com.aquashine.unit.memberd;
+
+import com.aquashine.model.Promo;
+import com.aquashine.repository.PromoRepository;
+import com.aquashine.service.PromoService;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+@Tag("DecisionTable")
+@DisplayName("Member D - Promo Decision Table")
+class PaymentDecisionTableTests {
+
+    private PromoService promoWith(int percent, int minAmount, int usedCount, int maxUses, LocalDateTime expiry, boolean active) {
+        PromoRepository repo = mock(PromoRepository.class);
+        Promo p = new Promo("TEST10", percent, minAmount, maxUses, expiry);
+        p.setUsedCount(usedCount);
+        p.setActive(active);
+        when(repo.findByCode("TEST10")).thenReturn(Optional.of(p));
+        when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        return new PromoService(repo);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "1000, 50, 500",
+        "1000, 10, 100",
+        "2000, 20, 400",
+        "1500, 30, 450"
+    })
+    @DisplayName("DT: discount = amount * percent / 100")
+    void discount_Calc(int amount, int percent, int expected) {
+        PromoService svc = promoWith(percent, 100, 0, 100, LocalDateTime.now().plusDays(30), true);
+        assertThat(svc.calculateDiscount("TEST10", amount)).isEqualTo(expected);
+    }
+
+    @Test @DisplayName("DT: amount below min -> reject")
+    void belowMin() {
+        PromoService svc = promoWith(50, 1000, 0, 100, LocalDateTime.now().plusDays(30), true);
+        assertThatThrownBy(() -> svc.calculateDiscount("TEST10", 500))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("DT: max uses reached -> reject")
+    void maxedOut() {
+        PromoService svc = promoWith(50, 100, 100, 100, LocalDateTime.now().plusDays(30), true);
+        assertThatThrownBy(() -> svc.calculateDiscount("TEST10", 1000))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+}
+
+================================================================================
+FILE: src\test\java\com\aquashine\unit\memberd\PromoEquivalenceTests.java
+================================================================================
+package com.aquashine.unit.memberd;
+
+import com.aquashine.model.Promo;
+import com.aquashine.repository.PromoRepository;
+import com.aquashine.service.PromoService;
+import org.junit.jupiter.api.*;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+@Tag("ECT")
+@DisplayName("Member D - Promo Equivalence Classes")
+class PromoEquivalenceTests {
+
+    private PromoService svc(Promo p) {
+        PromoRepository repo = mock(PromoRepository.class);
+        when(repo.findByCode(anyString())).thenReturn(Optional.ofNullable(p));
+        return new PromoService(repo);
+    }
+
+    private Promo valid() {
+        return new Promo("WASH50", 50, 500, 100, LocalDateTime.now().plusDays(30));
+    }
+
+    @Test @DisplayName("ECT-1: valid code -> works")
+    void ect1_valid() {
+        assertThatCode(() -> svc(valid()).calculateDiscount("WASH50", 1000)).doesNotThrowAnyException();
+    }
+
+    @Test @DisplayName("ECT-2: unknown code -> throws")
+    void ect2_unknown() {
+        PromoRepository repo = mock(PromoRepository.class);
+        when(repo.findByCode(anyString())).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> new PromoService(repo).calculateDiscount("GHOST", 1000))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("ECT-3: expired code -> throws")
+    void ect3_expired() {
+        Promo p = new Promo("EXPIRED", 50, 500, 100, LocalDateTime.now().minusDays(1));
+        assertThatThrownBy(() -> svc(p).calculateDiscount("EXPIRED", 1000))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("ECT-4: inactive code -> throws")
+    void ect4_inactive() {
+        Promo p = valid();
+        p.setActive(false);
+        assertThatThrownBy(() -> svc(p).calculateDiscount("WASH50", 1000))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test @DisplayName("ECT-5: too short code -> throws")
+    void ect5_too_short() {
+        assertThatThrownBy(() -> svc(valid()).calculateDiscount("AB", 1000))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+}
+

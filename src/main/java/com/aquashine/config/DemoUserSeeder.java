@@ -11,6 +11,13 @@ import org.springframework.stereotype.Component;
  * Seeds demo users plus a small amount of demo data so admin dashboards
  * have something to show. All inserts are best-effort: failures are logged
  * but do not crash startup.
+ *
+ * Demo users are UPSERTED — their passwords and roles are reset on every
+ * startup. This guarantees that abcd@gmail.com / 123456789 and
+ * abc@gmail.com / 12345678 always work, no matter what tests do to them.
+ *
+ * The demo-data (vehicles, bookings, payments) is only inserted once —
+ * it checks the count and skips if any rows already exist.
  */
 @Component
 public class DemoUserSeeder implements CommandLineRunner {
@@ -37,17 +44,20 @@ public class DemoUserSeeder implements CommandLineRunner {
         System.out.println("[DemoUserSeeder] Done.");
     }
 
+    /**
+     * Upserts the demo user: creates if missing, otherwise updates the
+     * password hash, role, name and phone to the documented values.
+     * This makes the seeder idempotent and self-healing.
+     */
     private Long seedUser(String email, String pass, String name, String phone, String role) {
-        var existing = users.findByEmail(email);
-        if (existing.isPresent()) return existing.get().getId();
-        User u = new User();
+        User u = users.findByEmail(email).orElseGet(User::new);
         u.setEmail(email);
         u.setPasswordHash(encoder.encode(pass));
         u.setFullName(name);
         u.setPhone(phone);
         u.setRole(role);
         users.save(u);
-        System.out.println("Seeded demo user: " + email + " (" + role + ")");
+        System.out.println("[DemoUserSeeder] Ensured: " + email + " (" + role + ")");
         return u.getId();
     }
 
